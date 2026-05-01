@@ -26,7 +26,13 @@ function telegramInitData(): string {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  let endpoint = `${API_BASE}${path}`;
+  // Avoid duplicated `/api` when base already includes it and path starts with `/api/...`.
+  if (API_BASE.endsWith('/api') && path.startsWith('/api/')) {
+    endpoint = `${API_BASE}${path.slice(4)}`;
+  }
+
+  const response = await fetch(endpoint, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
