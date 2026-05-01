@@ -1,13 +1,24 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.deps import require_user
-from core.repository import set_setting, upsert_sources, get_setting
+from core.repository import (
+    get_setting,
+    list_channel_cooldowns,
+    list_channel_guard_events,
+    set_setting,
+    upsert_sources,
+)
 from core.secrets import decrypt_value, encrypt_value
 from schemas import (
+    AntiAbuseSettings,
+    ChannelCooldownItem,
+    ChannelGuardEventItem,
+    ChannelGuardStatusResponse,
     MemoryPreview,
     ScheduleSettings,
     SkillsSettings,
@@ -36,6 +47,55 @@ async def update_sources(payload: SourceSettings, _user=Depends(require_user)) -
     await set_setting('sources', payload.model_dump())
     await upsert_sources(payload.channels)
     return payload
+
+
+@router.get('/anti-abuse', response_model=AntiAbuseSettings)
+async def get_anti_abuse_settings(_user=Depends(require_user)) -> AntiAbuseSettings:
+    payload = await get_setting('anti_abuse')
+    return AntiAbuseSettings(**payload)
+
+
+@router.put('/anti-abuse', response_model=AntiAbuseSettings)
+async def update_anti_abuse_settings(
+    payload: AntiAbuseSettings,
+    _user=Depends(require_user),
+) -> AntiAbuseSettings:
+    await set_setting('anti_abuse', payload.model_dump())
+    return payload
+
+
+@router.get('/anti-abuse/guard-status', response_model=ChannelGuardStatusResponse)
+async def get_channel_guard_status(_user=Depends(require_user)) -> ChannelGuardStatusResponse:
+    cooldown_rows = await list_channel_cooldowns(limit=200)
+    event_rows = await list_channel_guard_events(limit=100)
+
+    cooldowns: list[ChannelCooldownItem] = []
+    now = datetime.now(tz=timezone.utc)
+    for row in cooldown_rows:
+        raw = row.get('cooldown_until')
+        if not raw:
+            continue
+        try:
+            cooldown_until_dt = datetime.fromisoformat(raw)
+        except ValueError:
+            continue
+        if cooldown_until_dt.tzinfo is None:
+            cooldown_until_dt = cooldown_until_dt.replace(tzinfo=timezone.utc)
+        seconds_left = max(int((cooldown_until_dt.astimezone(timezone.utc) - now).total_seconds()), 0)
+        if seconds_left <= 0:
+            continue
+        cooldowns.append(
+            ChannelCooldownItem(
+                channel_username=str(row.get('channel_username', '')),
+                cooldown_until=raw,
+                seconds_left=seconds_left,
+                consecutive_errors=int(row.get('consecutive_errors') or 0),
+                last_error_code=(str(row['last_error_code']) if row.get('last_error_code') else None),
+            )
+        )
+
+    events = [ChannelGuardEventItem(**row) for row in event_rows]
+    return ChannelGuardStatusResponse(cooldowns=cooldowns, recent_events=events)
 
 
 @router.get('/schedule', response_model=ScheduleSettings)

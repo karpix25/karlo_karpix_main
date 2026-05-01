@@ -1,4 +1,6 @@
 import type {
+  AntiAbuseSettings,
+  ChannelGuardStatus,
   DraftItem,
   InboxItem,
   MemoryPreview,
@@ -91,6 +93,12 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify(payload),
   }),
+  getAntiAbuse: () => request<AntiAbuseSettings>('/api/settings/anti-abuse'),
+  putAntiAbuse: (payload: AntiAbuseSettings) => request<AntiAbuseSettings>('/api/settings/anti-abuse', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }),
+  getGuardStatus: () => request<ChannelGuardStatus>('/api/settings/anti-abuse/guard-status'),
 
   getMemory: () => request<MemoryPreview>('/api/settings/memory'),
 

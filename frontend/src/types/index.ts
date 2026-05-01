@@ -87,3 +87,41 @@ export interface UserbotConfig {
   session_name: string;
   has_api_hash: boolean;
 }
+
+export interface AntiAbuseSettings {
+  enabled: boolean;
+  messages_per_channel: number;
+  channel_jitter_min_ms: number;
+  channel_jitter_max_ms: number;
+  batch_size: number;
+  batch_pause_min_s: number;
+  batch_pause_max_s: number;
+  max_retries: number;
+  retry_backoff_s: number[];
+  floodwait_extra_jitter_min_s: number;
+  floodwait_extra_jitter_max_s: number;
+  channel_error_threshold: number;
+  channel_cooldown_default_s: number;
+  manual_bypass_cooldown: boolean;
+}
+
+export interface ChannelCooldownItem {
+  channel_username: string;
+  cooldown_until: string;
+  seconds_left: number;
+  consecutive_errors: number;
+  last_error_code?: string | null;
+}
+
+export interface ChannelGuardEventItem {
+  id: number;
+  channel_username: string;
+  event_type: string;
+  event_payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ChannelGuardStatus {
+  cooldowns: ChannelCooldownItem[];
+  recent_events: ChannelGuardEventItem[];
+}

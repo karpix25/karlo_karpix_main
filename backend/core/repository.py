@@ -31,6 +31,21 @@ async def create_pipeline_run(trigger_source: str) -> int:
         return int(cur.lastrowid)
 
 
+async def has_running_pipeline_run() -> bool:
+    async with get_db() as db:
+        cur = await db.execute(
+            '''
+            SELECT 1
+            FROM pipeline_runs
+            WHERE status = ?
+            LIMIT 1
+            ''',
+            (RunStatus.running.value,),
+        )
+        row = await cur.fetchone()
+        return row is not None
+
+
 async def finish_pipeline_run(
     run_id: int,
     *,
@@ -261,3 +276,121 @@ async def draft_count_for_candidate(candidate_id: int) -> int:
         cur = await db.execute('SELECT COUNT(1) AS cnt FROM drafts WHERE candidate_id = ?', (candidate_id,))
         row = await cur.fetchone()
         return int(row['cnt'])
+
+
+async def get_channel_guard_state(channel_username: str) -> dict[str, Any] | None:
+    async with get_db() as db:
+        cur = await db.execute(
+            'SELECT * FROM channel_guard_state WHERE channel_username = ?',
+            (channel_username,),
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+
+async def set_channel_guard_state(
+    channel_username: str,
+    *,
+    cooldown_until: str | None,
+    last_ok_at: str | None,
+    last_error_at: str | None,
+    consecutive_errors: int,
+    last_error_code: str | None,
+) -> None:
+    async with get_db() as db:
+        await db.execute(
+            '''
+            INSERT INTO channel_guard_state(
+                channel_username,
+                cooldown_until,
+                last_ok_at,
+                last_error_at,
+                consecutive_errors,
+                last_error_code,
+                updated_at
+            )
+            VALUES(?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(channel_username) DO UPDATE SET
+                cooldown_until = excluded.cooldown_until,
+                last_ok_at = excluded.last_ok_at,
+                last_error_at = excluded.last_error_at,
+                consecutive_errors = excluded.consecutive_errors,
+                last_error_code = excluded.last_error_code,
+                updated_at = excluded.updated_at
+            ''',
+            (
+                channel_username,
+                cooldown_until,
+                last_ok_at,
+                last_error_at,
+                consecutive_errors,
+                last_error_code,
+                utc_now_iso(),
+            ),
+        )
+        await db.commit()
+
+
+async def add_channel_guard_event(channel_username: str, event_type: str, payload: dict[str, Any]) -> None:
+    async with get_db() as db:
+        await db.execute(
+            '''
+            INSERT INTO channel_guard_events(channel_username, event_type, event_payload_json)
+            VALUES(?, ?, ?)
+            ''',
+            (channel_username, event_type, json.dumps(payload)),
+        )
+        await db.commit()
+
+
+async def list_channel_cooldowns(limit: int = 200) -> list[dict[str, Any]]:
+    async with get_db() as db:
+        cur = await db.execute(
+            '''
+            SELECT
+                channel_username,
+                cooldown_until,
+                consecutive_errors,
+                last_error_code
+            FROM channel_guard_state
+            WHERE
+                cooldown_until IS NOT NULL
+                AND julianday(cooldown_until) > julianday('now')
+            ORDER BY cooldown_until ASC
+            LIMIT ?
+            ''',
+            (limit,),
+        )
+        rows = await cur.fetchall()
+        return [dict(row) for row in rows]
+
+
+async def list_channel_guard_events(limit: int = 100) -> list[dict[str, Any]]:
+    async with get_db() as db:
+        cur = await db.execute(
+            '''
+            SELECT id, channel_username, event_type, event_payload_json, created_at
+            FROM channel_guard_events
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            ''',
+            (limit,),
+        )
+        rows = await cur.fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            payload_raw = row['event_payload_json']
+            try:
+                payload = json.loads(payload_raw) if payload_raw else {}
+            except Exception:
+                payload = {}
+            out.append(
+                {
+                    'id': int(row['id']),
+                    'channel_username': str(row['channel_username']),
+                    'event_type': str(row['event_type']),
+                    'event_payload': payload,
+                    'created_at': str(row['created_at']),
+                }
+            )
+        return out

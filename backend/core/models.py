@@ -27,3 +27,4 @@ class RunStatus(str, Enum):
     running = 'running'
     completed = 'completed'
     failed = 'failed'
+    skipped = 'skipped'

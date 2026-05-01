@@ -72,8 +72,28 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS channel_guard_state (
+    channel_username TEXT PRIMARY KEY,
+    cooldown_until TEXT,
+    last_ok_at TEXT,
+    last_error_at TEXT,
+    consecutive_errors INTEGER NOT NULL DEFAULT 0,
+    last_error_code TEXT,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS channel_guard_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel_username TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    event_payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_candidates_status ON content_candidates(status);
 CREATE INDEX IF NOT EXISTS idx_drafts_platform_status ON drafts(platform, status);
+CREATE INDEX IF NOT EXISTS idx_guard_state_cooldown ON channel_guard_state(cooldown_until);
+CREATE INDEX IF NOT EXISTS idx_guard_events_channel_created ON channel_guard_events(channel_username, created_at DESC);
 '''
 
 DEFAULT_SETTINGS = {
@@ -89,6 +109,22 @@ DEFAULT_SETTINGS = {
         'api_hash': '',
         'session_name': 'vaca_userbot',
         'enabled': False,
+    },
+    'anti_abuse': {
+        'enabled': True,
+        'messages_per_channel': 3,
+        'channel_jitter_min_ms': 1500,
+        'channel_jitter_max_ms': 4000,
+        'batch_size': 10,
+        'batch_pause_min_s': 15,
+        'batch_pause_max_s': 45,
+        'max_retries': 3,
+        'retry_backoff_s': [2, 8, 20],
+        'floodwait_extra_jitter_min_s': 1,
+        'floodwait_extra_jitter_max_s': 5,
+        'channel_error_threshold': 3,
+        'channel_cooldown_default_s': 1800,
+        'manual_bypass_cooldown': False,
     },
 }
 

@@ -18,6 +18,11 @@ class PipelineRunResponse(BaseModel):
     ingested_count: int
     candidates_count: int
     drafts_count: int
+    skipped_by_cooldown: int = 0
+    floodwait_channels: int = 0
+    retried_channels: int = 0
+    guarded_errors: int = 0
+    reason: str | None = None
 
 
 class InboxItem(BaseModel):
@@ -131,3 +136,41 @@ class UserbotConfigUpdateRequest(BaseModel):
     enabled: bool = False
     session_name: str = 'vaca_userbot'
     api_hash: str | None = None
+
+
+class AntiAbuseSettings(BaseModel):
+    enabled: bool = True
+    messages_per_channel: int = Field(default=3, ge=1, le=20)
+    channel_jitter_min_ms: int = Field(default=1500, ge=0, le=120_000)
+    channel_jitter_max_ms: int = Field(default=4000, ge=0, le=120_000)
+    batch_size: int = Field(default=10, ge=1, le=200)
+    batch_pause_min_s: int = Field(default=15, ge=0, le=3600)
+    batch_pause_max_s: int = Field(default=45, ge=0, le=3600)
+    max_retries: int = Field(default=3, ge=0, le=10)
+    retry_backoff_s: list[int] = Field(default_factory=lambda: [2, 8, 20])
+    floodwait_extra_jitter_min_s: int = Field(default=1, ge=0, le=120)
+    floodwait_extra_jitter_max_s: int = Field(default=5, ge=0, le=120)
+    channel_error_threshold: int = Field(default=3, ge=1, le=20)
+    channel_cooldown_default_s: int = Field(default=1800, ge=1, le=172800)
+    manual_bypass_cooldown: bool = False
+
+
+class ChannelCooldownItem(BaseModel):
+    channel_username: str
+    cooldown_until: str
+    seconds_left: int
+    consecutive_errors: int
+    last_error_code: str | None = None
+
+
+class ChannelGuardEventItem(BaseModel):
+    id: int
+    channel_username: str
+    event_type: str
+    event_payload: dict[str, Any]
+    created_at: str
+
+
+class ChannelGuardStatusResponse(BaseModel):
+    cooldowns: list[ChannelCooldownItem]
+    recent_events: list[ChannelGuardEventItem]
