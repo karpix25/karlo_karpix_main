@@ -1,0 +1,14 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.32,<1
+pydantic>=2.11,<3
+pydantic-settings>=2.6,<3
+cryptography>=43,<46
+aiosqlite>=0.20,<1
+apscheduler>=3.10,<4
+openai>=2.8,<3
+python-dotenv>=1,<2
+telethon>=1.38,<2
+telegraph>=2.2,<3
+httpx>=0.28,<1
+pytest>=8,<9
+pytest-asyncio>=0.24,<1
