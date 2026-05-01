@@ -6,9 +6,9 @@ interface Props {
 }
 
 const tabs = [
-  { id: 'inbox', label: 'Inbox' },
-  { id: 'drafts', label: 'Draft Review' },
-  { id: 'settings', label: 'Settings' },
+  { id: 'inbox', label: 'Входящие' },
+  { id: 'drafts', label: 'Черновики' },
+  { id: 'settings', label: 'Настройки' },
 ];
 
 export const NavTabs: FC<Props> = ({ value, onChange }) => {

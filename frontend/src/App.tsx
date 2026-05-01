@@ -13,6 +13,16 @@ export default function App() {
   const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
+    const webApp = (window as any)?.Telegram?.WebApp;
+    if (webApp) {
+      try {
+        webApp.ready();
+        webApp.expand();
+      } catch {
+        // noop
+      }
+    }
+
     const checkAccess = async () => {
       try {
         await api.getSources();
@@ -30,7 +40,7 @@ export default function App() {
   if (checkingAccess) {
     return (
       <main className="app">
-        <p>Checking access...</p>
+        <p>Проверка доступа...</p>
       </main>
     );
   }
@@ -51,7 +61,7 @@ export default function App() {
     <main className="app">
       <header>
         <h1>VACA</h1>
-        <p>Autonomous content workflow for Carlo</p>
+        <p>Автономный контент-процесс для Carlo</p>
       </header>
 
       <NavTabs value={tab} onChange={setTab} />

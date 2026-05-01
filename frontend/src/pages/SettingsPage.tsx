@@ -133,6 +133,12 @@ export function SettingsPage() {
     setNewChannel('');
   };
 
+  const removeChannel = (channelToRemove: string) => {
+    setSources({
+      channels: sources.channels.filter((item) => item.toLowerCase() !== channelToRemove.toLowerCase()),
+    });
+  };
+
   const parseRetryBackoff = (): number[] => {
     const parsed = retryBackoffInput
       .split(',')
@@ -222,7 +228,7 @@ export function SettingsPage() {
     try {
       const result = await api.signInUserbot({ phone, code });
       if (result.requires_2fa) {
-        setError('2FA password required. Enter account password and use Sign In With Password.');
+        setError('Нужен пароль 2FA. Введите пароль аккаунта и нажмите вход по паролю.');
       }
       await refreshUserbot();
     } catch (e) {
@@ -275,14 +281,14 @@ export function SettingsPage() {
   return (
     <section>
       <div className="toolbar">
-        <h2>Settings</h2>
-        <button onClick={saveAll} disabled={busy} type="button">Save</button>
+        <h2>Настройки</h2>
+        <button onClick={saveAll} disabled={busy} type="button">Сохранить всё</button>
       </div>
 
       {error ? <p className="error">{error}</p> : null}
 
       <div className="card">
-        <h3>Userbot Config</h3>
+        <h3>Конфигурация Userbot</h3>
         <label>API ID</label>
         <input
           type="number"
@@ -294,10 +300,10 @@ export function SettingsPage() {
         <input
           value={apiHashInput}
           onChange={(e) => setApiHashInput(e.target.value)}
-          placeholder={userbotConfig.has_api_hash ? 'Saved. Enter only to replace.' : 'Enter API hash'}
+          placeholder={userbotConfig.has_api_hash ? 'Сохранён. Введите только для замены.' : 'Введите API hash'}
           type="password"
         />
-        <label>Session Name</label>
+        <label>Имя сессии</label>
         <input
           value={userbotConfig.session_name}
           onChange={(e) => setUserbotConfig({ ...userbotConfig, session_name: e.target.value })}
@@ -309,63 +315,63 @@ export function SettingsPage() {
             checked={userbotConfig.enabled}
             onChange={(e) => setUserbotConfig({ ...userbotConfig, enabled: e.target.checked })}
           />
-          Enable Telethon runtime mode
+          Включить runtime-режим Telethon
         </label>
-        <button onClick={saveUserbotConfig} disabled={busy} type="button">Save Userbot Config</button>
+        <button onClick={saveUserbotConfig} disabled={busy} type="button">Сохранить конфиг Userbot</button>
       </div>
 
       <div className="card">
-        <h3>Userbot Auth</h3>
-        <p className="meta">Configured: {userbot.configured ? 'yes' : 'no'} · Enabled in runtime: {userbotConfig.enabled ? 'yes' : 'no'}</p>
-        <p className="meta">Authorized: {userbot.authorized ? 'yes' : 'no'} · Session: {userbot.session_name || '-'}</p>
+        <h3>Авторизация Userbot</h3>
+        <p className="meta">Сконфигурирован: {userbot.configured ? 'да' : 'нет'} · Runtime включен: {userbotConfig.enabled ? 'да' : 'нет'}</p>
+        <p className="meta">Авторизован: {userbot.authorized ? 'да' : 'нет'} · Сессия: {userbot.session_name || '-'}</p>
         {userbot.me_username || userbot.me_phone ? (
           <p className="meta">Account: {userbot.me_username ? `@${userbot.me_username}` : '-'} {userbot.me_phone ? `(${userbot.me_phone})` : ''}</p>
         ) : null}
 
-        <label>Phone (international format)</label>
+        <label>Телефон (международный формат)</label>
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1234567890" />
 
         <div className="actions auth-actions">
-          <button onClick={sendCode} disabled={busy || !userbot.configured || !phone.trim()} type="button">Send Code</button>
-          <button onClick={refreshUserbot} disabled={busy} type="button">Refresh Status</button>
-          <button onClick={logoutUserbot} disabled={busy || !userbot.authorized} type="button">Logout</button>
+          <button onClick={sendCode} disabled={busy || !userbot.configured || !phone.trim()} type="button">Отправить код</button>
+          <button onClick={refreshUserbot} disabled={busy} type="button">Обновить статус</button>
+          <button onClick={logoutUserbot} disabled={busy || !userbot.authorized} type="button">Выйти</button>
         </div>
 
-        <label>Code</label>
+        <label>Код</label>
         <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="12345" />
 
-        <label>2FA Password (if enabled)</label>
+        <label>Пароль 2FA (если включён)</label>
         <input
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Telegram 2FA password"
+          placeholder="Пароль 2FA Telegram"
           type="password"
         />
 
         <div className="actions auth-actions">
-          <button onClick={signInByCode} disabled={busy || !phone.trim() || !code.trim()} type="button">Sign In With Code</button>
-          <button onClick={signInByPassword} disabled={busy || !password.trim()} type="button">Sign In With Password</button>
+          <button onClick={signInByCode} disabled={busy || !phone.trim() || !code.trim()} type="button">Войти по коду</button>
+          <button onClick={signInByPassword} disabled={busy || !password.trim()} type="button">Войти по паролю</button>
         </div>
       </div>
 
       <div className="card">
-        <h3>Anti-Ban Settings</h3>
+        <h3>Антибан-настройки</h3>
         <label>
           <input
             type="checkbox"
             checked={antiAbuse.enabled}
             onChange={(e) => setAntiAbuse({ ...antiAbuse, enabled: e.target.checked })}
           />
-          Enable anti-ban guard
+          Включить anti-ban защиту
         </label>
-        <label>Messages Per Channel</label>
+        <label>Сообщений на канал</label>
         <input
           type="number"
           min={1}
           value={antiAbuse.messages_per_channel}
           onChange={(e) => setAntiAbuse({ ...antiAbuse, messages_per_channel: Number(e.target.value) })}
         />
-        <label>Channel Jitter Min/Max (ms)</label>
+        <label>Jitter между каналами Min/Max (мс)</label>
         <div className="inline">
           <input
             type="number"
@@ -380,14 +386,14 @@ export function SettingsPage() {
             onChange={(e) => setAntiAbuse({ ...antiAbuse, channel_jitter_max_ms: Number(e.target.value) })}
           />
         </div>
-        <label>Batch Size</label>
+        <label>Размер batch</label>
         <input
           type="number"
           min={1}
           value={antiAbuse.batch_size}
           onChange={(e) => setAntiAbuse({ ...antiAbuse, batch_size: Number(e.target.value) })}
         />
-        <label>Batch Pause Min/Max (s)</label>
+        <label>Пауза между batch Min/Max (сек)</label>
         <div className="inline">
           <input
             type="number"
@@ -402,20 +408,20 @@ export function SettingsPage() {
             onChange={(e) => setAntiAbuse({ ...antiAbuse, batch_pause_max_s: Number(e.target.value) })}
           />
         </div>
-        <label>Max Retries</label>
+        <label>Максимум повторов</label>
         <input
           type="number"
           min={0}
           value={antiAbuse.max_retries}
           onChange={(e) => setAntiAbuse({ ...antiAbuse, max_retries: Number(e.target.value) })}
         />
-        <label>Retry Backoff (comma separated seconds)</label>
+        <label>Backoff повтора (через запятую, сек)</label>
         <input
           value={retryBackoffInput}
           onChange={(e) => setRetryBackoffInput(e.target.value)}
           placeholder="2,8,20"
         />
-        <label>FloodWait Extra Jitter Min/Max (s)</label>
+        <label>Доп. jitter для FloodWait Min/Max (сек)</label>
         <div className="inline">
           <input
             type="number"
@@ -430,14 +436,14 @@ export function SettingsPage() {
             onChange={(e) => setAntiAbuse({ ...antiAbuse, floodwait_extra_jitter_max_s: Number(e.target.value) })}
           />
         </div>
-        <label>Channel Error Threshold</label>
+        <label>Порог ошибок канала</label>
         <input
           type="number"
           min={1}
           value={antiAbuse.channel_error_threshold}
           onChange={(e) => setAntiAbuse({ ...antiAbuse, channel_error_threshold: Number(e.target.value) })}
         />
-        <label>Default Channel Cooldown (s)</label>
+        <label>Cooldown канала по умолчанию (сек)</label>
         <input
           type="number"
           min={1}
@@ -450,28 +456,28 @@ export function SettingsPage() {
             checked={antiAbuse.manual_bypass_cooldown}
             onChange={(e) => setAntiAbuse({ ...antiAbuse, manual_bypass_cooldown: e.target.checked })}
           />
-          Allow manual run to bypass cooldown
+          Разрешить ручному запуску обходить cooldown
         </label>
       </div>
 
       <div className="card">
         <div className="toolbar">
-          <h3>Channel Guard Status</h3>
-          <button onClick={refreshGuardStatus} type="button">Refresh</button>
+          <h3>Статус защиты каналов</h3>
+          <button onClick={refreshGuardStatus} type="button">Обновить</button>
         </div>
-        <p className="meta">Cooldown Channels</p>
+        <p className="meta">Каналы в cooldown</p>
         <div className="list compact-list">
           {guardStatus.cooldowns.map((item) => (
             <article key={item.channel_username} className="card compact-card">
               <p><strong>{item.channel_username}</strong></p>
-              <p className="meta">seconds_left: {item.seconds_left} · errors: {item.consecutive_errors}</p>
-              <p className="meta">last_error: {item.last_error_code || '-'}</p>
+              <p className="meta">осталось сек: {item.seconds_left} · ошибок подряд: {item.consecutive_errors}</p>
+              <p className="meta">последняя ошибка: {item.last_error_code || '-'}</p>
             </article>
           ))}
-          {guardStatus.cooldowns.length === 0 ? <p className="meta">No channels in cooldown.</p> : null}
+          {guardStatus.cooldowns.length === 0 ? <p className="meta">Нет каналов в cooldown.</p> : null}
         </div>
 
-        <p className="meta">Recent Guard Events</p>
+        <p className="meta">Последние события защиты</p>
         <div className="list compact-list">
           {guardStatus.recent_events.slice(0, 30).map((event) => (
             <article key={event.id} className="card compact-card">
@@ -480,27 +486,30 @@ export function SettingsPage() {
               <pre>{JSON.stringify(event.event_payload, null, 2)}</pre>
             </article>
           ))}
-          {guardStatus.recent_events.length === 0 ? <p className="meta">No guard events yet.</p> : null}
+          {guardStatus.recent_events.length === 0 ? <p className="meta">Событий пока нет.</p> : null}
         </div>
       </div>
 
       <div className="card">
-        <h3>Source Channels</h3>
+        <h3>Каналы-источники</h3>
         <div className="inline">
           <input value={newChannel} onChange={(e) => setNewChannel(e.target.value)} placeholder="@channel" />
-          <button onClick={addChannel} type="button">Add</button>
+          <button onClick={addChannel} type="button">Добавить</button>
         </div>
-        <ul>
+        <ul className="channel-list">
           {sources.channels.map((channel) => (
-            <li key={channel}>{channel}</li>
+            <li key={channel}>
+              <span>{channel}</span>
+              <button type="button" className="danger-inline" onClick={() => removeChannel(channel)}>Удалить</button>
+            </li>
           ))}
         </ul>
       </div>
 
       <div className="card">
-        <h3>Connect Channels From Userbot</h3>
-        <button onClick={loadChannelsFromUserbot} disabled={busy || !userbot.authorized} type="button">Load My Channels</button>
-        {!userbot.authorized ? <p className="meta">Authorize userbot first to fetch channel list.</p> : null}
+        <h3>Подключение каналов из Userbot</h3>
+        <button onClick={loadChannelsFromUserbot} disabled={busy || !userbot.authorized} type="button">Загрузить мои каналы</button>
+        {!userbot.authorized ? <p className="meta">Сначала авторизуйте userbot, чтобы получить список каналов.</p> : null}
         <div className="list compact-list">
           {availableChannels.map((channel) => (
             <article key={channel.id} className="card compact-card">
@@ -510,17 +519,17 @@ export function SettingsPage() {
                 onClick={() => addSourceChannel(channel.username)}
                 type="button"
               >
-                Add To Sources
+                Добавить в источники
               </button>
             </article>
           ))}
-          {availableChannels.length === 0 ? <p className="meta">No channels loaded yet.</p> : null}
+          {availableChannels.length === 0 ? <p className="meta">Каналы пока не загружены.</p> : null}
         </div>
       </div>
 
       <div className="card">
-        <h3>Schedule</h3>
-        <label>Interval Minutes</label>
+        <h3>Расписание</h3>
+        <label>Интервал (минуты)</label>
         <input
           type="number"
           min={1}
@@ -531,14 +540,14 @@ export function SettingsPage() {
       </div>
 
       <div className="card">
-        <h3>Skill Toggles</h3>
+        <h3>Тогглы правил</h3>
         <label>
           <input
             type="checkbox"
             checked={skills.strict_links}
             onChange={(e) => setSkills({ ...skills, strict_links: e.target.checked })}
           />
-          strict_links
+          Строгая проверка ссылок (strict_links)
         </label>
         <label>
           <input
@@ -546,7 +555,7 @@ export function SettingsPage() {
             checked={skills.ban_giveaways}
             onChange={(e) => setSkills({ ...skills, ban_giveaways: e.target.checked })}
           />
-          ban_giveaways
+          Блокировать giveaway/промо (ban_giveaways)
         </label>
         <label>
           <input
@@ -554,12 +563,12 @@ export function SettingsPage() {
             checked={skills.prefer_technical_content}
             onChange={(e) => setSkills({ ...skills, prefer_technical_content: e.target.checked })}
           />
-          prefer_technical_content
+          Предпочитать технический контент (prefer_technical_content)
         </label>
       </div>
 
       <div className="card">
-        <h3>Memory Preview</h3>
+        <h3>Предпросмотр памяти</h3>
         <details>
           <summary>identity.md</summary>
           <pre>{memory.identity}</pre>

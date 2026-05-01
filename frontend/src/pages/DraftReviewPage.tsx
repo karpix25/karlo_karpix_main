@@ -31,7 +31,7 @@ export function DraftReviewPage() {
 
   const contentPreview = useMemo(() => {
     if (!selected) return '';
-    return `${selected.content}\n\nCTA: ${selected.cta || ''}\nHashtags: ${selected.hashtags || ''}`;
+    return `${selected.content}\n\nПризыв к действию: ${selected.cta || ''}\nХэштеги: ${selected.hashtags || ''}`;
   }, [selected]);
 
   const save = async () => {
@@ -101,7 +101,7 @@ export function DraftReviewPage() {
   return (
     <section>
       <div className="toolbar">
-        <h2>Draft Review</h2>
+        <h2>Проверка черновиков</h2>
         <div className="tabs small">
           <button className={platform === 'telegram' ? 'tab active' : 'tab'} onClick={() => setPlatform('telegram')} type="button">
             Telegram
@@ -123,39 +123,39 @@ export function DraftReviewPage() {
               onClick={() => setSelected(draft)}
               type="button"
             >
-              <p className="meta">Draft #{draft.id}</p>
+              <p className="meta">Черновик #{draft.id}</p>
               <p>{draft.content.slice(0, 120)}...</p>
             </button>
           ))}
-          {!drafts.length ? <p>No drafts in review.</p> : null}
+          {!drafts.length ? <p>Нет черновиков на проверке.</p> : null}
         </div>
 
         <div className="editor">
           {selected ? (
             <>
-              <label>Content</label>
+              <label>Текст</label>
               <textarea
                 value={selected.content}
                 onChange={(e) => setSelected({ ...selected, content: e.target.value })}
                 rows={10}
               />
-              <label>CTA</label>
+              <label>Призыв к действию (CTA)</label>
               <input value={selected.cta || ''} onChange={(e) => setSelected({ ...selected, cta: e.target.value })} />
-              <label>Hashtags</label>
+              <label>Хэштеги</label>
               <input
                 value={selected.hashtags || ''}
                 onChange={(e) => setSelected({ ...selected, hashtags: e.target.value })}
               />
               <div className="actions">
-                <button onClick={save} disabled={busy} type="button">Save</button>
-                <button onClick={regenerate} disabled={busy} type="button">Regenerate</button>
-                <button onClick={approve} disabled={busy} type="button">Approve</button>
-                <button onClick={reject} disabled={busy} type="button">Reject</button>
+                <button onClick={save} disabled={busy} type="button">Сохранить</button>
+                <button onClick={regenerate} disabled={busy} type="button">Перегенерировать</button>
+                <button onClick={approve} disabled={busy} type="button">Одобрить</button>
+                <button onClick={reject} disabled={busy} type="button">Отклонить</button>
               </div>
               <pre className="preview">{contentPreview}</pre>
             </>
           ) : (
-            <p>Select a draft.</p>
+            <p>Выберите черновик.</p>
           )}
         </div>
       </div>

@@ -40,24 +40,24 @@ export function InboxPage() {
   return (
     <section>
       <div className="toolbar">
-        <h2>Inbox</h2>
+        <h2>Входящие</h2>
         <button onClick={triggerRun} disabled={loading} type="button">
-          {loading ? 'Running...' : 'Run Pipeline'}
+          {loading ? 'Запуск...' : 'Запустить пайплайн'}
         </button>
       </div>
       {error ? <p className="error">{error}</p> : null}
       <div className="list">
         {items.map((item) => (
           <article key={item.candidate_id} className="card">
-            <p className="meta">{item.channel_username} · score {item.relevance_score.toFixed(2)}</p>
+            <p className="meta">{item.channel_username} · релевантность {item.relevance_score.toFixed(2)}</p>
             <p>{item.summary}</p>
             <details>
-              <summary>Source text</summary>
+              <summary>Текст источника</summary>
               <pre>{item.text}</pre>
             </details>
           </article>
         ))}
-        {!items.length && !loading ? <p>No inbox items yet.</p> : null}
+        {!items.length && !loading ? <p>Пока нет входящих материалов.</p> : null}
       </div>
     </section>
   );
