@@ -120,6 +120,9 @@ async def test_floodwait_sets_cooldown_and_continues(monkeypatch: pytest.MonkeyP
         },
     )
 
+    bad_channel = '@bad_floodwait_case'
+    good_channel = '@good_floodwait_case'
+
     class FakeFloodWaitError(Exception):
         def __init__(self, seconds: int):
             super().__init__('flood wait')
@@ -143,7 +146,7 @@ async def test_floodwait_sets_cooldown_and_continues(monkeypatch: pytest.MonkeyP
 
         async def iter_messages(self, channel: str, limit: int = 1):
             _ = limit
-            if channel == '@bad':
+            if channel == bad_channel:
                 raise FakeFloodWaitError(10)
             yield FakeMessage(id=1, message='ok msg', date=datetime.now(tz=timezone.utc))
 
@@ -156,14 +159,14 @@ async def test_floodwait_sets_cooldown_and_continues(monkeypatch: pytest.MonkeyP
     monkeypatch.setitem(sys.modules, 'telethon.errors', telethon_errors_module)
 
     service = TelethonUserbotService()
-    result = await service.fetch_new_messages(['@bad', '@good'], trigger_source='scheduler')
+    result = await service.fetch_new_messages([bad_channel, good_channel], trigger_source='scheduler')
 
     assert len(result.messages) == 1
-    assert result.messages[0].channel_username == '@good'
+    assert result.messages[0].channel_username == good_channel
     assert result.metrics.floodwait_channels == 1
     assert result.metrics.guarded_errors == 1
 
-    bad_state = await get_channel_guard_state('@bad')
+    bad_state = await get_channel_guard_state(bad_channel)
     assert bad_state is not None
     assert bad_state['cooldown_until']
     assert int(bad_state['consecutive_errors']) == 1

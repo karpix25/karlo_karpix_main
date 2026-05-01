@@ -23,6 +23,18 @@ npm install
 npm run dev
 ```
 
+## Deploy With Docker Compose (VPS / Coolify)
+
+This repository includes production-oriented Dockerfiles and compose setup.
+
+1. Set environment values in `.env` (at minimum auth/admin/security keys).
+2. Deploy with compose:
+```bash
+docker compose up -d --build
+```
+3. Expose `frontend` service via your reverse proxy/domain.  
+Frontend serves the app and proxies `/api/*` to backend internally.
+
 ## LLM Providers (OpenRouter / 9router / OpenAI)
 
 ### OpenRouter (recommended)
