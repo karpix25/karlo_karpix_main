@@ -72,6 +72,7 @@ export function SettingsPage() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const addSourceChannel = (channelRaw: string) => {
     const channel = channelRaw.trim();
@@ -190,6 +191,7 @@ export function SettingsPage() {
 
   const saveUserbotConfig = async () => {
     setError('');
+    setNotice('');
     setBusy(true);
     try {
       await api.putUserbotConfig({
@@ -198,6 +200,7 @@ export function SettingsPage() {
         api_hash: apiHashInput.trim() ? apiHashInput.trim() : null,
       });
       setApiHashInput('');
+      setNotice('Конфиг userbot сохранен.');
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
@@ -208,9 +211,11 @@ export function SettingsPage() {
 
   const sendCode = async () => {
     setError('');
+    setNotice('');
     setBusy(true);
     try {
       await api.sendUserbotCode(phone);
+      setNotice('Код отправлен. Введите код из Telegram и нажмите "Войти по коду".');
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
@@ -221,11 +226,16 @@ export function SettingsPage() {
 
   const signInByCode = async () => {
     setError('');
+    setNotice('');
     setBusy(true);
     try {
       const result = await api.signInUserbot({ phone, code });
       if (result.requires_2fa) {
-        setError('Нужен пароль 2FA. Введите пароль аккаунта и нажмите вход по паролю.');
+        setNotice('Нужен пароль 2FA. Введите пароль аккаунта и нажмите "Войти по паролю".');
+      } else if (result.authorized) {
+        setNotice('Вход выполнен успешно.');
+      } else {
+        setNotice('Код принят, но авторизация не завершена.');
       }
       await refreshUserbot();
     } catch (e) {
@@ -237,9 +247,15 @@ export function SettingsPage() {
 
   const signInByPassword = async () => {
     setError('');
+    setNotice('');
     setBusy(true);
     try {
-      await api.signInUserbot({ phone, password });
+      const result = await api.signInUserbot({ phone, password });
+      if (result.authorized) {
+        setNotice('Вход по 2FA-паролю выполнен успешно.');
+      } else {
+        setNotice('Пароль принят, но авторизация не завершена.');
+      }
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
@@ -250,10 +266,12 @@ export function SettingsPage() {
 
   const logoutUserbot = async () => {
     setError('');
+    setNotice('');
     setBusy(true);
     try {
       await api.logoutUserbot();
       setAvailableChannels([]);
+      setNotice('Вы вышли из userbot.');
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
@@ -264,10 +282,12 @@ export function SettingsPage() {
 
   const loadChannelsFromUserbot = async () => {
     setError('');
+    setNotice('');
     setBusy(true);
     try {
       const channels = await api.getUserbotChannels();
       setAvailableChannels(channels);
+      setNotice(`Загружено каналов: ${channels.length}.`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -283,6 +303,7 @@ export function SettingsPage() {
       </div>
 
       {error ? <p className="error">{error}</p> : null}
+      {notice ? <p className="success">{notice}</p> : null}
 
       <div className="card">
         <h3>Конфигурация Userbot</h3>
@@ -312,9 +333,14 @@ export function SettingsPage() {
       <div className="card">
         <h3>Авторизация Userbot</h3>
         <p className="meta">Сконфигурирован: {userbot.configured ? 'да' : 'нет'}</p>
-        <p className="meta">Авторизован: {userbot.authorized ? 'да' : 'нет'} · Сессия: {userbot.session_name || '-'}</p>
+        <p className={userbot.authorized ? 'success' : 'meta'}>
+          Статус входа: {userbot.authorized ? 'выполнен' : 'не выполнен'} · Сессия: {userbot.session_name || '-'}
+        </p>
         {userbot.me_username || userbot.me_phone ? (
           <p className="meta">Account: {userbot.me_username ? `@${userbot.me_username}` : '-'} {userbot.me_phone ? `(${userbot.me_phone})` : ''}</p>
+        ) : null}
+        {!userbot.authorized && userbot.pending_phone ? (
+          <p className="meta">Ожидается код для номера: {userbot.pending_phone}</p>
         ) : null}
 
         <label>Телефон (международный формат)</label>

@@ -214,6 +214,11 @@ button:disabled {
   font-weight: 700;
 }
 
+.success {
+  color: #198754;
+  font-weight: 700;
+}
+
 .channel-list {
   list-style: none;
   padding: 0;
