@@ -63,3 +63,19 @@ def test_userbot_status_handles_telethon_session_lock_errors(client, monkeypatch
     payload = status_resp.json()
     assert payload['configured'] is True
     assert payload['authorized'] is False
+
+
+def test_userbot_config_sanitizes_session_name(client) -> None:
+    headers = auth_headers()
+    put_resp = client.put(
+        '/api/settings/userbot/config',
+        json={
+            'api_id': 123,
+            'api_hash': 'abc123',
+            'session_name': '../../very/unsafe\\\\name?.session',
+        },
+        headers=headers,
+    )
+    assert put_resp.status_code == 200
+    payload = put_resp.json()
+    assert payload['session_name'] == 'very_unsafe__name_.session'

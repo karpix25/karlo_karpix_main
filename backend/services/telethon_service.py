@@ -16,7 +16,7 @@ from core.repository import (
 )
 from core.repository import utc_now_iso
 from core.secrets import decrypt_value
-from services.telethon_runtime import telethon_session_lock
+from services.telethon_runtime import normalize_session_name, telethon_operation_lock
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,10 @@ class TelethonUserbotService:
                 api_hash = ''
         else:
             api_hash = str(self.settings.telethon_api_hash or '').strip()
-        session_name = str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip()
+        session_name = normalize_session_name(
+            str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip(),
+            default='vaca_userbot',
+        )
         configured = bool(api_id and api_hash)
         return {
             'api_id': api_id,
@@ -255,7 +258,7 @@ class TelethonUserbotService:
             runtime['api_hash'],
         )
 
-        async with telethon_session_lock:
+        async with telethon_operation_lock(runtime['session_name']):
             async with client:
                 for idx, channel in enumerate(active_channels):
                     state = await get_channel_guard_state(channel)
@@ -351,7 +354,7 @@ class TelethonUserbotService:
             runtime['api_id'],
             runtime['api_hash'],
         )
-        async with telethon_session_lock:
+        async with telethon_operation_lock(runtime['session_name']):
             async with client:
                 msg = await client.send_message(target_channel, text)
                 return f'https://t.me/{target_channel}/{msg.id}'

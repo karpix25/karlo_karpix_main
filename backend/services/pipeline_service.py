@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+import uuid
 
 from agents.content_orchestrator import ContentOrchestratorAgent
 from core.models import CandidateStatus, DraftPlatform, DraftStatus, RunStatus
@@ -12,9 +13,10 @@ from core.repository import (
     create_pipeline_run,
     finish_pipeline_run,
     get_setting,
-    has_running_pipeline_run,
     insert_raw_message,
+    release_runtime_lock,
     set_draft_status,
+    try_acquire_runtime_lock,
 )
 from services.rule_engine import SpamRuleEngine
 from services.telethon_service import FetchGuardMetrics, TelethonUserbotService
@@ -22,6 +24,9 @@ from services.telethon_service import FetchGuardMetrics, TelethonUserbotService
 
 class PipelineService:
     _run_lock: asyncio.Lock = asyncio.Lock()
+    _lock_owner: str = f'pipeline-worker:{uuid.uuid4().hex}'
+    _db_lock_key: str = 'pipeline_run'
+    _db_lock_ttl_seconds: int = 6 * 60 * 60
 
     def __init__(self) -> None:
         self.userbot = TelethonUserbotService()
@@ -29,7 +34,7 @@ class PipelineService:
         self.rules = SpamRuleEngine(Path('./backend/memory/sorting_rules.md'))
 
     async def run(self, trigger_source: str = 'manual') -> dict:
-        if self._run_lock.locked() or await has_running_pipeline_run():
+        if self._run_lock.locked():
             return {
                 'run_id': 0,
                 'status': RunStatus.skipped.value,
@@ -44,6 +49,25 @@ class PipelineService:
             }
 
         async with self._run_lock:
+            acquired = await try_acquire_runtime_lock(
+                self._db_lock_key,
+                self._lock_owner,
+                self._db_lock_ttl_seconds,
+            )
+            if not acquired:
+                return {
+                    'run_id': 0,
+                    'status': RunStatus.skipped.value,
+                    'ingested_count': 0,
+                    'candidates_count': 0,
+                    'drafts_count': 0,
+                    'skipped_by_cooldown': 0,
+                    'floodwait_channels': 0,
+                    'retried_channels': 0,
+                    'guarded_errors': 0,
+                    'reason': 'already_running',
+                }
+
             run_id = await create_pipeline_run(trigger_source=trigger_source)
             ingested_count = 0
             candidates_count = 0
@@ -140,3 +164,5 @@ class PipelineService:
                     error=str(exc),
                 )
                 raise
+            finally:
+                await release_runtime_lock(self._db_lock_key, self._lock_owner)

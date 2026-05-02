@@ -90,10 +90,18 @@ CREATE TABLE IF NOT EXISTS channel_guard_events (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS runtime_locks (
+    lock_key TEXT PRIMARY KEY,
+    owner TEXT NOT NULL,
+    acquired_at_epoch INTEGER NOT NULL,
+    expires_at_epoch INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_candidates_status ON content_candidates(status);
 CREATE INDEX IF NOT EXISTS idx_drafts_platform_status ON drafts(platform, status);
 CREATE INDEX IF NOT EXISTS idx_guard_state_cooldown ON channel_guard_state(cooldown_until);
 CREATE INDEX IF NOT EXISTS idx_guard_events_channel_created ON channel_guard_events(channel_username, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_runtime_locks_expires ON runtime_locks(expires_at_epoch);
 '''
 
 DEFAULT_SETTINGS = {

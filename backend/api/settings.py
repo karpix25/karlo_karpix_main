@@ -31,6 +31,7 @@ from schemas import (
     UserbotSignInRequest,
     UserbotStatusResponse,
 )
+from services.telethon_runtime import normalize_session_name
 from services.userbot_auth_service import userbot_auth_service
 
 router = APIRouter(prefix='/api/settings', tags=['settings'])
@@ -155,7 +156,10 @@ async def get_userbot_config(_user=Depends(require_user)) -> UserbotConfigRespon
             api_hash = ''
     else:
         api_hash = str(env.telethon_api_hash or '')
-    session_name = str(settings_payload.get('session_name') or env.telethon_session or 'vaca_userbot')
+    session_name = normalize_session_name(
+        str(settings_payload.get('session_name') or env.telethon_session or 'vaca_userbot'),
+        default='vaca_userbot',
+    )
     return UserbotConfigResponse(
         api_id=api_id,
         session_name=session_name,
@@ -190,7 +194,7 @@ async def update_userbot_config(
     saved = {
         'api_id': int(payload.api_id),
         'api_hash': api_hash_to_store,
-        'session_name': payload.session_name.strip() or 'vaca_userbot',
+        'session_name': normalize_session_name(payload.session_name, default='vaca_userbot'),
     }
     await set_setting('userbot', saved)
     return UserbotConfigResponse(

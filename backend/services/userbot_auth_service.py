@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from core.config import get_settings
 from core.repository import get_setting
 from core.secrets import decrypt_value
-from services.telethon_runtime import telethon_session_lock
+from services.telethon_runtime import normalize_session_name, telethon_operation_lock
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,10 @@ class UserbotAuthService:
                 api_hash = ''
         else:
             api_hash = str(self.settings.telethon_api_hash or '').strip()
-        session_name = str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip()
+        session_name = normalize_session_name(
+            str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip(),
+            default='vaca_userbot',
+        )
         return {
             'api_id': api_id,
             'api_hash': api_hash,
@@ -80,7 +83,7 @@ class UserbotAuthService:
         me_username = None
         me_phone = None
         try:
-            async with telethon_session_lock:
+            async with telethon_operation_lock(config['session_name']):
                 await client.connect()
                 authorized = await client.is_user_authorized()
                 if authorized:
@@ -122,7 +125,7 @@ class UserbotAuthService:
 
         client = self._make_client(config)
         try:
-            async with telethon_session_lock:
+            async with telethon_operation_lock(config['session_name']):
                 await client.connect()
                 sent = await client.send_code_request(normalized)
                 self._pending[normalized] = PendingLogin(
@@ -146,7 +149,7 @@ class UserbotAuthService:
 
         client = self._make_client(config)
         try:
-            async with telethon_session_lock:
+            async with telethon_operation_lock(config['session_name']):
                 await client.connect()
 
                 if password:
@@ -194,7 +197,7 @@ class UserbotAuthService:
 
         client = self._make_client(config)
         try:
-            async with telethon_session_lock:
+            async with telethon_operation_lock(config['session_name']):
                 await client.connect()
                 await client.log_out()
         finally:
@@ -211,7 +214,7 @@ class UserbotAuthService:
         client = self._make_client(config)
         channels: list[dict] = []
         try:
-            async with telethon_session_lock:
+            async with telethon_operation_lock(config['session_name']):
                 await client.connect()
                 authorized = await client.is_user_authorized()
                 if not authorized:

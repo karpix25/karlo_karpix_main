@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import time
 from typing import Any
 
 from .database import get_db
@@ -63,6 +64,36 @@ async def finish_pipeline_run(
             WHERE id = ?
             ''',
             (status.value, ingested_count, candidates_count, drafts_count, error, utc_now_iso(), run_id),
+        )
+        await db.commit()
+
+
+async def try_acquire_runtime_lock(lock_key: str, owner: str, ttl_seconds: int) -> bool:
+    now_epoch = int(time.time())
+    expires_epoch = now_epoch + max(int(ttl_seconds), 1)
+    async with get_db() as db:
+        cur = await db.execute(
+            '''
+            INSERT INTO runtime_locks(lock_key, owner, acquired_at_epoch, expires_at_epoch)
+            VALUES(?, ?, ?, ?)
+            ON CONFLICT(lock_key) DO UPDATE SET
+                owner = excluded.owner,
+                acquired_at_epoch = excluded.acquired_at_epoch,
+                expires_at_epoch = excluded.expires_at_epoch
+            WHERE runtime_locks.expires_at_epoch < excluded.acquired_at_epoch
+               OR runtime_locks.owner = excluded.owner
+            ''',
+            (lock_key, owner, now_epoch, expires_epoch),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+
+async def release_runtime_lock(lock_key: str, owner: str) -> None:
+    async with get_db() as db:
+        await db.execute(
+            'DELETE FROM runtime_locks WHERE lock_key = ? AND owner = ?',
+            (lock_key, owner),
         )
         await db.commit()
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { NavTabs } from './components/NavTabs';
 import { api } from './lib/api';
@@ -20,6 +20,7 @@ export default function App() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [userbotStatus, setUserbotStatus] = useState<UserbotStatus>(defaultUserbotStatus);
+  const statusRequestInFlightRef = useRef(false);
 
   useEffect(() => {
     const webApp = (window as any)?.Telegram?.WebApp;
@@ -33,11 +34,17 @@ export default function App() {
     }
 
     const refreshUserbotStatus = async () => {
+      if (statusRequestInFlightRef.current) {
+        return;
+      }
+      statusRequestInFlightRef.current = true;
       try {
         const status = await api.getUserbotStatus();
         setUserbotStatus(status);
       } catch {
         // noop
+      } finally {
+        statusRequestInFlightRef.current = false;
       }
     };
 
@@ -55,11 +62,21 @@ export default function App() {
     void checkAccess();
 
     const intervalId = window.setInterval(() => {
-      void refreshUserbotStatus();
-    }, 15000);
+      if (document.visibilityState === 'visible') {
+        void refreshUserbotStatus();
+      }
+    }, 30000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshUserbotStatus();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
 
