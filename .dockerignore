@@ -3,6 +3,11 @@
 .env
 backend/vaca.db
 backend/backend/vaca.db
+backend/backend
+backend/.userbot_secrets.key
+backend/*.session
+backend/telethon_sessions
+backend/backend/telethon_sessions
 backend/.pytest_cache
 backend/__pycache__
 backend/**/__pycache__
