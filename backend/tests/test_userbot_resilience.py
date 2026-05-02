@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 import sys
 from types import ModuleType
 
 from core.repository import set_setting
+from services.telethon_runtime import session_storage_path
 
 
 def auth_headers() -> dict[str, str]:
@@ -79,3 +81,18 @@ def test_userbot_config_sanitizes_session_name(client) -> None:
     assert put_resp.status_code == 200
     payload = put_resp.json()
     assert payload['session_name'] == 'very_unsafe__name_.session'
+
+
+def test_session_file_migrates_to_persistent_storage(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    storage_dir = tmp_path / 'persistent' / 'telethon_sessions'
+    monkeypatch.setenv('TELETHON_SESSION_DIR', storage_dir.as_posix())
+
+    legacy = tmp_path / 'vaca_userbot.session'
+    legacy.write_text('legacy-session-content', encoding='utf-8')
+
+    session_base = session_storage_path('vaca_userbot')
+    assert session_base == (storage_dir / 'vaca_userbot').as_posix()
+    assert legacy.exists() is False
+    migrated = storage_dir / 'vaca_userbot.session'
+    assert migrated.exists() is True

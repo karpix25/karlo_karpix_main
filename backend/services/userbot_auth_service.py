@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from core.config import get_settings
 from core.repository import get_setting
 from core.secrets import decrypt_value
-from services.telethon_runtime import normalize_session_name, telethon_operation_lock
+from services.telethon_runtime import normalize_session_name, session_storage_path, telethon_operation_lock
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class UserbotAuthService:
         from telethon import TelegramClient
 
         return TelegramClient(
-            config['session_name'],
+            session_storage_path(config['session_name']),
             config['api_id'],
             config['api_hash'],
         )

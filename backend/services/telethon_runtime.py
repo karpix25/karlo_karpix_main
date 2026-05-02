@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
+from pathlib import Path
 import re
+import shutil
 import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
@@ -12,6 +15,7 @@ _SESSION_LOCKS: dict[str, asyncio.Lock] = {}
 _LOCAL_LOCKS_GUARD = asyncio.Lock()
 _LOCK_OWNER = f'telethon-worker:{uuid.uuid4().hex}'
 _SESSION_NAME_RE = re.compile(r'[^A-Za-z0-9_.-]+')
+_FALLBACK_SESSION_STORAGE_DIR = Path('./backend/telethon_sessions')
 
 
 def normalize_session_name(raw_name: str | None, default: str = 'vaca_userbot') -> str:
@@ -23,6 +27,33 @@ def normalize_session_name(raw_name: str | None, default: str = 'vaca_userbot') 
     if not value:
         return default
     return value[:64]
+
+
+def session_storage_path(session_name: str) -> str:
+    """
+    Returns stable session path that survives container redeploys.
+    Also migrates legacy local session file on first access.
+    """
+    normalized = normalize_session_name(session_name)
+    storage_dir = Path(os.getenv('TELETHON_SESSION_DIR', '/data/telethon_sessions'))
+    try:
+        storage_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        storage_dir = _FALLBACK_SESSION_STORAGE_DIR
+        storage_dir.mkdir(parents=True, exist_ok=True)
+    target = storage_dir / normalized
+
+    # Telethon sqlite session file physically lives at "<name>.session".
+    legacy = Path(f'./{normalized}.session')
+    target_sqlite = Path(f'{target.as_posix()}.session')
+    if legacy.exists() and not target_sqlite.exists():
+        try:
+            shutil.move(legacy.as_posix(), target_sqlite.as_posix())
+        except OSError:
+            # Best effort: continue with target path even if migration failed.
+            pass
+
+    return target.as_posix()
 
 
 async def _get_local_lock(session_name: str) -> asyncio.Lock:

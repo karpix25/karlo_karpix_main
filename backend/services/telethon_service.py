@@ -16,7 +16,7 @@ from core.repository import (
 )
 from core.repository import utc_now_iso
 from core.secrets import decrypt_value
-from services.telethon_runtime import normalize_session_name, telethon_operation_lock
+from services.telethon_runtime import normalize_session_name, session_storage_path, telethon_operation_lock
 
 logger = logging.getLogger(__name__)
 
@@ -253,7 +253,7 @@ class TelethonUserbotService:
         floodwait_channels: set[str] = set()
 
         client = TelegramClient(
-            runtime['session_name'],
+            session_storage_path(runtime['session_name']),
             runtime['api_id'],
             runtime['api_hash'],
         )
@@ -350,7 +350,7 @@ class TelethonUserbotService:
         from telethon import TelegramClient  # lazy import
 
         client = TelegramClient(
-            runtime['session_name'],
+            session_storage_path(runtime['session_name']),
             runtime['api_id'],
             runtime['api_hash'],
         )
