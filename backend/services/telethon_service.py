@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -15,6 +16,8 @@ from core.repository import (
 )
 from core.repository import utc_now_iso
 from core.secrets import decrypt_value
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -48,7 +51,11 @@ class TelethonUserbotService:
         api_id = int(payload.get('api_id') or self.settings.telethon_api_id or 0)
         raw_hash = str(payload.get('api_hash') or '').strip()
         if raw_hash:
-            api_hash = decrypt_value(raw_hash).strip()
+            try:
+                api_hash = decrypt_value(raw_hash).strip()
+            except ValueError:
+                logger.warning('telethon api_hash decrypt failed; treating config as incomplete')
+                api_hash = ''
         else:
             api_hash = str(self.settings.telethon_api_hash or '').strip()
         session_name = str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip()

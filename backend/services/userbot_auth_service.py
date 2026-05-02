@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from core.config import get_settings
 from core.repository import get_setting
 from core.secrets import decrypt_value
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -25,7 +28,11 @@ class UserbotAuthService:
         api_id = int(payload.get('api_id') or self.settings.telethon_api_id or 0)
         raw_hash = str(payload.get('api_hash') or '').strip()
         if raw_hash:
-            api_hash = decrypt_value(raw_hash).strip()
+            try:
+                api_hash = decrypt_value(raw_hash).strip()
+            except ValueError:
+                logger.warning('userbot api_hash decrypt failed; treating config as incomplete')
+                api_hash = ''
         else:
             api_hash = str(self.settings.telethon_api_hash or '').strip()
         session_name = str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip()

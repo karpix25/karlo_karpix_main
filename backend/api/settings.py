@@ -151,8 +151,8 @@ async def get_userbot_config(_user=Depends(require_user)) -> UserbotConfigRespon
     if stored_hash:
         try:
             api_hash = decrypt_value(stored_hash)
-        except ValueError as exc:
-            raise HTTPException(status_code=500, detail=str(exc)) from exc
+        except ValueError:
+            api_hash = ''
     else:
         api_hash = str(env.telethon_api_hash or '')
     session_name = str(settings_payload.get('session_name') or env.telethon_session or 'vaca_userbot')
