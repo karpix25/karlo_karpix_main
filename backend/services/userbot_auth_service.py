@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from core.config import get_settings
 from core.repository import get_setting
 from core.secrets import decrypt_value
+from services.telethon_runtime import telethon_session_lock
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,12 @@ class UserbotAuthService:
             config['api_hash'],
         )
 
+    async def _safe_disconnect(self, client) -> None:
+        try:
+            await client.disconnect()
+        except Exception as exc:
+            logger.warning('telethon disconnect failed: %s', exc)
+
     async def status(self) -> dict:
         config = await self._runtime_config()
         if not self._is_configured(config):
@@ -73,15 +80,18 @@ class UserbotAuthService:
         me_username = None
         me_phone = None
         try:
-            await client.connect()
-            authorized = await client.is_user_authorized()
-            if authorized:
-                me = await client.get_me()
-                if me:
-                    me_username = getattr(me, 'username', None)
-                    me_phone = getattr(me, 'phone', None)
+            async with telethon_session_lock:
+                await client.connect()
+                authorized = await client.is_user_authorized()
+                if authorized:
+                    me = await client.get_me()
+                    if me:
+                        me_username = getattr(me, 'username', None)
+                        me_phone = getattr(me, 'phone', None)
+        except Exception as exc:
+            logger.warning('userbot status check failed: %s', exc)
         finally:
-            await client.disconnect()
+            await self._safe_disconnect(client)
 
         pending_phone = None
         pending_at = None
@@ -112,15 +122,16 @@ class UserbotAuthService:
 
         client = self._make_client(config)
         try:
-            await client.connect()
-            sent = await client.send_code_request(normalized)
-            self._pending[normalized] = PendingLogin(
-                phone=normalized,
-                phone_code_hash=sent.phone_code_hash,
-                created_at=datetime.now(tz=timezone.utc),
-            )
+            async with telethon_session_lock:
+                await client.connect()
+                sent = await client.send_code_request(normalized)
+                self._pending[normalized] = PendingLogin(
+                    phone=normalized,
+                    phone_code_hash=sent.phone_code_hash,
+                    created_at=datetime.now(tz=timezone.utc),
+                )
         finally:
-            await client.disconnect()
+            await self._safe_disconnect(client)
 
         return {'status': 'code_sent', 'phone': normalized}
 
@@ -135,45 +146,46 @@ class UserbotAuthService:
 
         client = self._make_client(config)
         try:
-            await client.connect()
+            async with telethon_session_lock:
+                await client.connect()
 
-            if password:
-                await client.sign_in(password=password)
-            else:
-                pending = self._pending.get(normalized)
-                if not pending:
-                    raise ValueError('code_not_requested')
-                if not code:
-                    raise ValueError('code_required')
-                try:
-                    await client.sign_in(
-                        phone=normalized,
-                        code=code.strip(),
-                        phone_code_hash=pending.phone_code_hash,
-                    )
-                except Exception as exc:
-                    from telethon.errors import SessionPasswordNeededError
+                if password:
+                    await client.sign_in(password=password)
+                else:
+                    pending = self._pending.get(normalized)
+                    if not pending:
+                        raise ValueError('code_not_requested')
+                    if not code:
+                        raise ValueError('code_required')
+                    try:
+                        await client.sign_in(
+                            phone=normalized,
+                            code=code.strip(),
+                            phone_code_hash=pending.phone_code_hash,
+                        )
+                    except Exception as exc:
+                        from telethon.errors import SessionPasswordNeededError
 
-                    if isinstance(exc, SessionPasswordNeededError):
-                        return {
-                            'authorized': False,
-                            'requires_2fa': True,
-                            'status': 'password_required',
-                        }
-                    raise
+                        if isinstance(exc, SessionPasswordNeededError):
+                            return {
+                                'authorized': False,
+                                'requires_2fa': True,
+                                'status': 'password_required',
+                            }
+                        raise
 
-            authorized = await client.is_user_authorized()
-            me = await client.get_me() if authorized else None
-            self._pending.pop(normalized, None)
-            return {
-                'authorized': authorized,
-                'requires_2fa': False,
-                'status': 'authorized' if authorized else 'not_authorized',
-                'me_username': getattr(me, 'username', None) if me else None,
-                'me_phone': getattr(me, 'phone', None) if me else None,
-            }
+                authorized = await client.is_user_authorized()
+                me = await client.get_me() if authorized else None
+                self._pending.pop(normalized, None)
+                return {
+                    'authorized': authorized,
+                    'requires_2fa': False,
+                    'status': 'authorized' if authorized else 'not_authorized',
+                    'me_username': getattr(me, 'username', None) if me else None,
+                    'me_phone': getattr(me, 'phone', None) if me else None,
+                }
         finally:
-            await client.disconnect()
+            await self._safe_disconnect(client)
 
     async def logout(self) -> dict:
         config = await self._runtime_config()
@@ -182,10 +194,11 @@ class UserbotAuthService:
 
         client = self._make_client(config)
         try:
-            await client.connect()
-            await client.log_out()
+            async with telethon_session_lock:
+                await client.connect()
+                await client.log_out()
         finally:
-            await client.disconnect()
+            await self._safe_disconnect(client)
 
         self._pending.clear()
         return {'status': 'logged_out'}
@@ -198,30 +211,31 @@ class UserbotAuthService:
         client = self._make_client(config)
         channels: list[dict] = []
         try:
-            await client.connect()
-            authorized = await client.is_user_authorized()
-            if not authorized:
-                raise ValueError('userbot_not_authorized')
+            async with telethon_session_lock:
+                await client.connect()
+                authorized = await client.is_user_authorized()
+                if not authorized:
+                    raise ValueError('userbot_not_authorized')
 
-            async for dialog in client.iter_dialogs(limit=limit):
-                entity = dialog.entity
-                if not entity:
-                    continue
+                async for dialog in client.iter_dialogs(limit=limit):
+                    entity = dialog.entity
+                    if not entity:
+                        continue
 
-                # Keep only dialogs that can be used by username in source settings.
-                username = getattr(entity, 'username', None)
-                if not username:
-                    continue
+                    # Keep only dialogs that can be used by username in source settings.
+                    username = getattr(entity, 'username', None)
+                    if not username:
+                        continue
 
-                channels.append(
-                    {
-                        'title': dialog.name,
-                        'username': f'@{username}',
-                        'id': int(getattr(entity, 'id', 0) or 0),
-                    }
-                )
+                    channels.append(
+                        {
+                            'title': dialog.name,
+                            'username': f'@{username}',
+                            'id': int(getattr(entity, 'id', 0) or 0),
+                        }
+                    )
         finally:
-            await client.disconnect()
+            await self._safe_disconnect(client)
 
         channels.sort(key=lambda item: item['title'].lower())
         return channels

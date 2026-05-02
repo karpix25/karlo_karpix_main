@@ -10,7 +10,8 @@ from cryptography.fernet import Fernet, InvalidToken
 from .config import get_settings
 
 _ENC_PREFIX = 'enc:v1:'
-_DEFAULT_KEY_FILE = './backend/.userbot_secrets.key'
+_DEFAULT_KEY_FILE = '/data/.userbot_secrets.key'
+_FALLBACK_KEY_FILE = './backend/.userbot_secrets.key'
 
 
 def _runtime_key_path() -> Path:
@@ -19,21 +20,28 @@ def _runtime_key_path() -> Path:
 
 
 def _load_or_create_runtime_key() -> str:
-    key_path = _runtime_key_path()
-    if key_path.exists():
-        existing = key_path.read_text(encoding='utf-8').strip()
-        if existing:
-            return existing
+    def _read_or_create(path: Path) -> str:
+        if path.exists():
+            existing = path.read_text(encoding='utf-8').strip()
+            if existing:
+                return existing
 
-    key_path.parent.mkdir(parents=True, exist_ok=True)
-    generated = Fernet.generate_key().decode('utf-8')
-    key_path.write_text(generated, encoding='utf-8')
+        path.parent.mkdir(parents=True, exist_ok=True)
+        generated = Fernet.generate_key().decode('utf-8')
+        path.write_text(generated, encoding='utf-8')
+        try:
+            path.chmod(0o600)
+        except OSError:
+            # Best-effort hardening for environments without chmod support.
+            pass
+        return generated
+
+    primary = _runtime_key_path()
     try:
-        key_path.chmod(0o600)
+        return _read_or_create(primary)
     except OSError:
-        # Best-effort hardening for environments without chmod support.
-        pass
-    return generated
+        # Fallback for local/dev or restricted filesystems.
+        return _read_or_create(Path(_FALLBACK_KEY_FILE))
 
 
 def _fernet_from_env() -> Fernet:

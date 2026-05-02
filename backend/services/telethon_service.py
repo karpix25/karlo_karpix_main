@@ -16,6 +16,7 @@ from core.repository import (
 )
 from core.repository import utc_now_iso
 from core.secrets import decrypt_value
+from services.telethon_runtime import telethon_session_lock
 
 logger = logging.getLogger(__name__)
 
@@ -254,84 +255,85 @@ class TelethonUserbotService:
             runtime['api_hash'],
         )
 
-        async with client:
-            for idx, channel in enumerate(active_channels):
-                state = await get_channel_guard_state(channel)
-                attempts = 0
-                channel_messages: list[IngestedMessage] = []
-                channel_success = False
+        async with telethon_session_lock:
+            async with client:
+                for idx, channel in enumerate(active_channels):
+                    state = await get_channel_guard_state(channel)
+                    attempts = 0
+                    channel_messages: list[IngestedMessage] = []
+                    channel_success = False
 
-                while attempts <= max_retries:
-                    try:
-                        async for message in client.iter_messages(channel, limit=limit_per_channel):
-                            if not message or not getattr(message, 'message', None):
-                                continue
-                            channel_messages.append(
-                                IngestedMessage(
-                                    channel_username=channel,
-                                    message_id=int(message.id),
-                                    text=str(message.message),
-                                    posted_at=(message.date or datetime.now(tz=timezone.utc)).isoformat(),
+                    while attempts <= max_retries:
+                        try:
+                            async for message in client.iter_messages(channel, limit=limit_per_channel):
+                                if not message or not getattr(message, 'message', None):
+                                    continue
+                                channel_messages.append(
+                                    IngestedMessage(
+                                        channel_username=channel,
+                                        message_id=int(message.id),
+                                        text=str(message.message),
+                                        posted_at=(message.date or datetime.now(tz=timezone.utc)).isoformat(),
+                                    )
                                 )
+                            channel_success = True
+                            break
+                        except FloodWaitError as exc:
+                            floodwait_channels.add(channel)
+                            extra = random.randint(
+                                int(anti_abuse.get('floodwait_extra_jitter_min_s', 1)),
+                                int(anti_abuse.get('floodwait_extra_jitter_max_s', 5)),
                             )
-                        channel_success = True
-                        break
-                    except FloodWaitError as exc:
-                        floodwait_channels.add(channel)
-                        extra = random.randint(
-                            int(anti_abuse.get('floodwait_extra_jitter_min_s', 1)),
-                            int(anti_abuse.get('floodwait_extra_jitter_max_s', 5)),
+                            cooldown_seconds = int(getattr(exc, 'seconds', 0)) + extra
+                            await self._mark_channel_error(
+                                channel,
+                                state=state,
+                                error_code='flood_wait',
+                                cooldown_seconds=cooldown_seconds,
+                            )
+                            result.metrics.guarded_errors += 1
+                            break
+                        except Exception as exc:
+                            attempts += 1
+                            error_code = exc.__class__.__name__
+                            if attempts <= max_retries:
+                                retried_channels.add(channel)
+                                backoff = retry_backoff_s[min(attempts - 1, len(retry_backoff_s) - 1)] if retry_backoff_s else 0
+                                jitter = random.randint(0, 2)
+                                await asyncio.sleep(max(backoff + jitter, 0))
+                                continue
+
+                            previous = int((state or {}).get('consecutive_errors') or 0)
+                            cooldown_seconds = default_cooldown_s if previous + 1 >= threshold else 0
+                            await self._mark_channel_error(
+                                channel,
+                                state=state,
+                                error_code=error_code,
+                                cooldown_seconds=cooldown_seconds,
+                            )
+                            result.metrics.guarded_errors += 1
+                            break
+
+                    if channel_success:
+                        result.messages.extend(channel_messages)
+                        await self._mark_channel_success(channel)
+
+                    if guard_enabled and idx < len(active_channels) - 1:
+                        await self._sleep_ms(
+                            int(anti_abuse.get('channel_jitter_min_ms', 1500)),
+                            int(anti_abuse.get('channel_jitter_max_ms', 4000)),
                         )
-                        cooldown_seconds = int(getattr(exc, 'seconds', 0)) + extra
-                        await self._mark_channel_error(
-                            channel,
-                            state=state,
-                            error_code='flood_wait',
-                            cooldown_seconds=cooldown_seconds,
+
+                    if (
+                        guard_enabled
+                        and int(anti_abuse.get('batch_size', 10)) > 0
+                        and (idx + 1) % int(anti_abuse.get('batch_size', 10)) == 0
+                        and idx < len(active_channels) - 1
+                    ):
+                        await self._sleep_s(
+                            int(anti_abuse.get('batch_pause_min_s', 15)),
+                            int(anti_abuse.get('batch_pause_max_s', 45)),
                         )
-                        result.metrics.guarded_errors += 1
-                        break
-                    except Exception as exc:
-                        attempts += 1
-                        error_code = exc.__class__.__name__
-                        if attempts <= max_retries:
-                            retried_channels.add(channel)
-                            backoff = retry_backoff_s[min(attempts - 1, len(retry_backoff_s) - 1)] if retry_backoff_s else 0
-                            jitter = random.randint(0, 2)
-                            await asyncio.sleep(max(backoff + jitter, 0))
-                            continue
-
-                        previous = int((state or {}).get('consecutive_errors') or 0)
-                        cooldown_seconds = default_cooldown_s if previous + 1 >= threshold else 0
-                        await self._mark_channel_error(
-                            channel,
-                            state=state,
-                            error_code=error_code,
-                            cooldown_seconds=cooldown_seconds,
-                        )
-                        result.metrics.guarded_errors += 1
-                        break
-
-                if channel_success:
-                    result.messages.extend(channel_messages)
-                    await self._mark_channel_success(channel)
-
-                if guard_enabled and idx < len(active_channels) - 1:
-                    await self._sleep_ms(
-                        int(anti_abuse.get('channel_jitter_min_ms', 1500)),
-                        int(anti_abuse.get('channel_jitter_max_ms', 4000)),
-                    )
-
-                if (
-                    guard_enabled
-                    and int(anti_abuse.get('batch_size', 10)) > 0
-                    and (idx + 1) % int(anti_abuse.get('batch_size', 10)) == 0
-                    and idx < len(active_channels) - 1
-                ):
-                    await self._sleep_s(
-                        int(anti_abuse.get('batch_pause_min_s', 15)),
-                        int(anti_abuse.get('batch_pause_max_s', 45)),
-                    )
 
         result.metrics.retried_channels = len(retried_channels)
         result.metrics.floodwait_channels = len(floodwait_channels)
@@ -349,6 +351,7 @@ class TelethonUserbotService:
             runtime['api_id'],
             runtime['api_hash'],
         )
-        async with client:
-            msg = await client.send_message(target_channel, text)
-            return f'https://t.me/{target_channel}/{msg.id}'
+        async with telethon_session_lock:
+            async with client:
+                msg = await client.send_message(target_channel, text)
+                return f'https://t.me/{target_channel}/{msg.id}'
