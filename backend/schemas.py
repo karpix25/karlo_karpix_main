@@ -90,7 +90,6 @@ class SettingEnvelope(BaseModel):
 
 class UserbotStatusResponse(BaseModel):
     configured: bool
-    enabled: bool
     authorized: bool
     session_name: str
     me_username: str | None = None
@@ -126,14 +125,12 @@ class UserbotChannelItem(BaseModel):
 
 class UserbotConfigResponse(BaseModel):
     api_id: int
-    enabled: bool
     session_name: str
     has_api_hash: bool
 
 
 class UserbotConfigUpdateRequest(BaseModel):
     api_id: int = Field(ge=0)
-    enabled: bool = False
     session_name: str = 'vaca_userbot'
     api_hash: str | None = None
 

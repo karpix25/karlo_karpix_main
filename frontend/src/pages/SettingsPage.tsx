@@ -15,7 +15,6 @@ import type {
 
 const defaultUserbot: UserbotStatus = {
   configured: false,
-  enabled: false,
   authorized: false,
   session_name: '',
   requires_2fa: false,
@@ -23,7 +22,6 @@ const defaultUserbot: UserbotStatus = {
 
 const defaultUserbotConfig: UserbotConfig = {
   api_id: 0,
-  enabled: false,
   session_name: 'vaca_userbot',
   has_api_hash: false,
 };
@@ -196,7 +194,6 @@ export function SettingsPage() {
     try {
       await api.putUserbotConfig({
         api_id: userbotConfig.api_id,
-        enabled: userbotConfig.enabled,
         session_name: userbotConfig.session_name,
         api_hash: apiHashInput.trim() ? apiHashInput.trim() : null,
       });
@@ -309,20 +306,12 @@ export function SettingsPage() {
           onChange={(e) => setUserbotConfig({ ...userbotConfig, session_name: e.target.value })}
           placeholder="vaca_userbot"
         />
-        <label>
-          <input
-            type="checkbox"
-            checked={userbotConfig.enabled}
-            onChange={(e) => setUserbotConfig({ ...userbotConfig, enabled: e.target.checked })}
-          />
-          Включить runtime-режим Telethon
-        </label>
         <button onClick={saveUserbotConfig} disabled={busy} type="button">Сохранить конфиг Userbot</button>
       </div>
 
       <div className="card">
         <h3>Авторизация Userbot</h3>
-        <p className="meta">Сконфигурирован: {userbot.configured ? 'да' : 'нет'} · Runtime включен: {userbotConfig.enabled ? 'да' : 'нет'}</p>
+        <p className="meta">Сконфигурирован: {userbot.configured ? 'да' : 'нет'}</p>
         <p className="meta">Авторизован: {userbot.authorized ? 'да' : 'нет'} · Сессия: {userbot.session_name || '-'}</p>
         {userbot.me_username || userbot.me_phone ? (
           <p className="meta">Account: {userbot.me_username ? `@${userbot.me_username}` : '-'} {userbot.me_phone ? `(${userbot.me_phone})` : ''}</p>

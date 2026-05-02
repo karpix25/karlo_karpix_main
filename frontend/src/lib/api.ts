@@ -110,7 +110,7 @@ export const api = {
 
   getUserbotStatus: () => request<UserbotStatus>('/api/settings/userbot/status'),
   getUserbotConfig: () => request<UserbotConfig>('/api/settings/userbot/config'),
-  putUserbotConfig: (payload: { api_id: number; enabled: boolean; session_name: string; api_hash?: string | null }) =>
+  putUserbotConfig: (payload: { api_id: number; session_name: string; api_hash?: string | null }) =>
     request<UserbotConfig>('/api/settings/userbot/config', {
       method: 'PUT',
       body: JSON.stringify(payload),

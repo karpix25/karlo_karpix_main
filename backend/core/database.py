@@ -108,7 +108,6 @@ DEFAULT_SETTINGS = {
         'api_id': 0,
         'api_hash': '',
         'session_name': 'vaca_userbot',
-        'enabled': False,
     },
     'anti_abuse': {
         'enabled': True,

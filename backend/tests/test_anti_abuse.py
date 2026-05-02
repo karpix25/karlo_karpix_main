@@ -21,7 +21,7 @@ from services.telethon_service import TelethonUserbotService
 @pytest.mark.asyncio
 async def test_fetch_skips_channel_on_cooldown() -> None:
     await init_db()
-    await set_setting('userbot', {'api_id': 1, 'api_hash': 'x', 'session_name': 'vaca_userbot', 'enabled': False})
+    await set_setting('userbot', {'api_id': 0, 'api_hash': '', 'session_name': 'vaca_userbot'})
     await set_setting(
         'anti_abuse',
         {
@@ -60,7 +60,7 @@ async def test_fetch_skips_channel_on_cooldown() -> None:
 @pytest.mark.asyncio
 async def test_manual_bypass_cooldown_when_enabled() -> None:
     await init_db()
-    await set_setting('userbot', {'api_id': 1, 'api_hash': 'x', 'session_name': 'vaca_userbot', 'enabled': False})
+    await set_setting('userbot', {'api_id': 0, 'api_hash': '', 'session_name': 'vaca_userbot'})
     await set_setting(
         'anti_abuse',
         {
@@ -99,7 +99,7 @@ async def test_manual_bypass_cooldown_when_enabled() -> None:
 @pytest.mark.asyncio
 async def test_floodwait_sets_cooldown_and_continues(monkeypatch: pytest.MonkeyPatch) -> None:
     await init_db()
-    await set_setting('userbot', {'api_id': 123, 'api_hash': 'plain_hash', 'session_name': 'vaca_userbot', 'enabled': True})
+    await set_setting('userbot', {'api_id': 123, 'api_hash': 'plain_hash', 'session_name': 'vaca_userbot'})
     await set_setting(
         'anti_abuse',
         {
@@ -122,6 +122,14 @@ async def test_floodwait_sets_cooldown_and_continues(monkeypatch: pytest.MonkeyP
 
     bad_channel = '@bad_floodwait_case'
     good_channel = '@good_floodwait_case'
+    await set_channel_guard_state(
+        bad_channel,
+        cooldown_until=None,
+        last_ok_at=None,
+        last_error_at=None,
+        consecutive_errors=0,
+        last_error_code=None,
+    )
 
     class FakeFloodWaitError(Exception):
         def __init__(self, seconds: int):

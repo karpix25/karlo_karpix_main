@@ -5,6 +5,8 @@ __pycache__/
 .env
 backend/vaca.db
 backend/backend/vaca.db
+backend/.userbot_secrets.key
+backend/*.session
 node_modules/
 frontend/node_modules/
 frontend/dist/

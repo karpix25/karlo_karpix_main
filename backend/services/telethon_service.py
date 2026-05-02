@@ -52,13 +52,12 @@ class TelethonUserbotService:
         else:
             api_hash = str(self.settings.telethon_api_hash or '').strip()
         session_name = str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip()
-        enabled = bool(payload.get('enabled', self.settings.telethon_enabled))
         configured = bool(api_id and api_hash)
         return {
             'api_id': api_id,
             'api_hash': api_hash,
             'session_name': session_name or 'vaca_userbot',
-            'enabled': enabled and configured,
+            'configured': configured,
         }
 
     async def _anti_abuse_settings(self) -> dict[str, Any]:
@@ -223,7 +222,7 @@ class TelethonUserbotService:
             active_channels.append(channel)
 
         # Fallback mode for local/dev and CI tests without Telegram credentials.
-        if not runtime['enabled']:
+        if not runtime['configured']:
             now = datetime.now(tz=timezone.utc).isoformat()
             for idx, channel in enumerate(active_channels):
                 result.messages.append(
@@ -333,7 +332,7 @@ class TelethonUserbotService:
 
     async def publish_to_telegram(self, target_channel: str, text: str) -> str:
         runtime = await self._runtime_config()
-        if not runtime['enabled']:
+        if not runtime['configured']:
             return f'mock://telegram/{target_channel}/{abs(hash(text)) % 10_000_000}'
 
         from telethon import TelegramClient  # lazy import

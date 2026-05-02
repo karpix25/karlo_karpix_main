@@ -29,12 +29,10 @@ class UserbotAuthService:
         else:
             api_hash = str(self.settings.telethon_api_hash or '').strip()
         session_name = str(payload.get('session_name') or self.settings.telethon_session or 'vaca_userbot').strip()
-        enabled = bool(payload.get('enabled', self.settings.telethon_enabled))
         return {
             'api_id': api_id,
             'api_hash': api_hash,
             'session_name': session_name or 'vaca_userbot',
-            'enabled': enabled,
         }
 
     def _is_configured(self, config: dict) -> bool:
@@ -54,7 +52,6 @@ class UserbotAuthService:
         if not self._is_configured(config):
             return {
                 'configured': False,
-                'enabled': config['enabled'],
                 'authorized': False,
                 'session_name': config['session_name'],
                 'me_username': None,
@@ -88,7 +85,6 @@ class UserbotAuthService:
 
         return {
             'configured': True,
-            'enabled': config['enabled'],
             'authorized': authorized,
             'session_name': config['session_name'],
             'me_username': me_username,

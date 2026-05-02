@@ -156,10 +156,8 @@ async def get_userbot_config(_user=Depends(require_user)) -> UserbotConfigRespon
     else:
         api_hash = str(env.telethon_api_hash or '')
     session_name = str(settings_payload.get('session_name') or env.telethon_session or 'vaca_userbot')
-    enabled = bool(settings_payload.get('enabled', env.telethon_enabled))
     return UserbotConfigResponse(
         api_id=api_id,
-        enabled=enabled,
         session_name=session_name,
         has_api_hash=bool(api_hash.strip()),
     )
@@ -193,12 +191,10 @@ async def update_userbot_config(
         'api_id': int(payload.api_id),
         'api_hash': api_hash_to_store,
         'session_name': payload.session_name.strip() or 'vaca_userbot',
-        'enabled': bool(payload.enabled),
     }
     await set_setting('userbot', saved)
     return UserbotConfigResponse(
         api_id=saved['api_id'],
-        enabled=saved['enabled'],
         session_name=saved['session_name'],
         has_api_hash=bool(saved['api_hash']),
     )

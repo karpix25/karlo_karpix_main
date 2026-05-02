@@ -57,7 +57,6 @@ export interface MemoryPreview {
 
 export interface UserbotStatus {
   configured: boolean;
-  enabled: boolean;
   authorized: boolean;
   session_name: string;
   me_username?: string | null;
@@ -83,7 +82,6 @@ export interface UserbotChannelItem {
 
 export interface UserbotConfig {
   api_id: number;
-  enabled: boolean;
   session_name: string;
   has_api_hash: boolean;
 }

@@ -44,7 +44,6 @@ class Settings(BaseSettings):
     openrouter_http_referer: str = ''
     openrouter_x_title: str = 'VACA'
 
-    telethon_enabled: bool = False
     telethon_api_id: int = 0
     telethon_api_hash: str = ''
     telethon_session: str = 'vaca_userbot'

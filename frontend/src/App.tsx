@@ -64,11 +64,13 @@ export default function App() {
         <p>Автономный контент-процесс для Carlo</p>
       </header>
 
-      <NavTabs value={tab} onChange={setTab} />
+      <section className="app-content">
+        {tab === 'inbox' ? <InboxPage /> : null}
+        {tab === 'drafts' ? <DraftReviewPage /> : null}
+        {tab === 'settings' ? <SettingsPage /> : null}
+      </section>
 
-      {tab === 'inbox' ? <InboxPage /> : null}
-      {tab === 'drafts' ? <DraftReviewPage /> : null}
-      {tab === 'settings' ? <SettingsPage /> : null}
+      <NavTabs value={tab} onChange={setTab} />
     </main>
   );
 }

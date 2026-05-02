@@ -13,17 +13,17 @@ const tabs = [
 
 export const NavTabs: FC<Props> = ({ value, onChange }) => {
   return (
-    <div className="tabs">
+    <nav className="bottom-nav" aria-label="Основная навигация">
       {tabs.map((tab) => (
         <button
           key={tab.id}
-          className={value === tab.id ? 'tab active' : 'tab'}
+          className={value === tab.id ? 'bottom-nav-tab active' : 'bottom-nav-tab'}
           onClick={() => onChange(tab.id)}
           type="button"
         >
           {tab.label}
         </button>
       ))}
-    </div>
+    </nav>
   );
 };

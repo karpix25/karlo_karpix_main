@@ -40,7 +40,6 @@ def client(test_db_path: Path) -> TestClient:
     os.environ['AUTH_ALLOW_INSECURE_DEV'] = 'true'
     os.environ['ADMIN_USER_ID'] = '0'
     os.environ['USERBOT_SECRETS_KEY'] = 'test-userbot-secret'
-    os.environ['TELETHON_ENABLED'] = 'false'
     os.environ['TELEGRAM_BOT_TOKEN'] = ''
 
     from core.config import get_settings
