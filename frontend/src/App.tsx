@@ -5,12 +5,21 @@ import { api } from './lib/api';
 import { DraftReviewPage } from './pages/DraftReviewPage';
 import { InboxPage } from './pages/InboxPage';
 import { SettingsPage } from './pages/SettingsPage';
+import type { UserbotStatus } from './types';
 import './styles.css';
+
+const defaultUserbotStatus: UserbotStatus = {
+  configured: false,
+  authorized: false,
+  session_name: '',
+  requires_2fa: false,
+};
 
 export default function App() {
   const [tab, setTab] = useState('inbox');
   const [accessDenied, setAccessDenied] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
+  const [userbotStatus, setUserbotStatus] = useState<UserbotStatus>(defaultUserbotStatus);
 
   useEffect(() => {
     const webApp = (window as any)?.Telegram?.WebApp;
@@ -23,9 +32,18 @@ export default function App() {
       }
     }
 
+    const refreshUserbotStatus = async () => {
+      try {
+        const status = await api.getUserbotStatus();
+        setUserbotStatus(status);
+      } catch {
+        // noop
+      }
+    };
+
     const checkAccess = async () => {
       try {
-        await api.getSources();
+        await Promise.all([api.getSources(), refreshUserbotStatus()]);
         setAccessDenied(false);
       } catch (e) {
         const message = (e as Error).message || '';
@@ -35,7 +53,29 @@ export default function App() {
       }
     };
     void checkAccess();
+
+    const intervalId = window.setInterval(() => {
+      void refreshUserbotStatus();
+    }, 15000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, []);
+
+  const statusBadge = (() => {
+    if (!userbotStatus.configured) {
+      return { text: 'Userbot не настроен', cls: 'warn' as const };
+    }
+    if (userbotStatus.authorized) {
+      const account = userbotStatus.me_username ? ` · @${userbotStatus.me_username}` : '';
+      return { text: `Userbot авторизован${account}`, cls: 'ok' as const };
+    }
+    if (userbotStatus.pending_phone) {
+      return { text: 'Userbot ожидает код подтверждения', cls: 'warn' as const };
+    }
+    return { text: 'Userbot не авторизован', cls: 'bad' as const };
+  })();
 
   if (checkingAccess) {
     return (
@@ -59,9 +99,14 @@ export default function App() {
 
   return (
     <main className="app">
-      <header>
-        <h1>VACA</h1>
-        <p>Автономный контент-процесс для Carlo</p>
+      <header className="app-header">
+        <div className="app-header-row">
+          <div className="app-brand">
+            <h1>VACA</h1>
+            <p>Автономный контент-процесс для Carlo</p>
+          </div>
+          <span className={`status-pill ${statusBadge.cls}`}>{statusBadge.text}</span>
+        </div>
       </header>
 
       <section className="app-content">
