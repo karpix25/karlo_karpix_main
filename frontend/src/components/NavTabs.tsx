@@ -14,16 +14,20 @@ const tabs = [
 export const NavTabs: FC<Props> = ({ value, onChange }) => {
   return (
     <nav className="bottom-nav" aria-label="Основная навигация">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          className={value === tab.id ? 'bottom-nav-tab active' : 'bottom-nav-tab'}
-          onClick={() => onChange(tab.id)}
-          type="button"
-        >
-          {tab.label}
-        </button>
-      ))}
+      {tabs.map((tab) => {
+        const [emoji, label] = tab.label.split(' ');
+        return (
+          <button
+            key={tab.id}
+            className={value === tab.id ? 'bottom-nav-tab active' : 'bottom-nav-tab'}
+            onClick={() => onChange(tab.id)}
+            type="button"
+          >
+            <span>{emoji}</span>
+            <span>{label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 };
