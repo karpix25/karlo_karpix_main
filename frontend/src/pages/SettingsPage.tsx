@@ -135,6 +135,8 @@ export function SettingsPage() {
   const addChannel = () => {
     addSourceChannel(newChannel);
     setNewChannel('');
+    setNotice('Канал добавлен. Не забудьте нажать "Сохранить всё".');
+    setTimeout(() => setNotice(''), 3000);
   };
 
   const removeChannel = (channelToRemove: string) => {
@@ -153,6 +155,7 @@ export function SettingsPage() {
 
   const saveAll = async () => {
     setError('');
+    setNotice('');
     setBusy(true);
     try {
       const antiAbusePayload: AntiAbuseSettings = {
@@ -165,9 +168,12 @@ export function SettingsPage() {
         api.putSkills(skills),
         api.putAntiAbuse(antiAbusePayload),
       ]);
+      setNotice('Все настройки сохранены успешно!');
+      setTimeout(() => setNotice(''), 4000);
       await load();
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setBusy(false);
     }
@@ -181,6 +187,7 @@ export function SettingsPage() {
       setUserbotConfig(config);
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     }
   };
 
@@ -191,6 +198,7 @@ export function SettingsPage() {
       setGuardStatus(data);
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     }
   };
 
@@ -206,9 +214,11 @@ export function SettingsPage() {
       });
       setApiHashInput('');
       setNotice('Конфиг userbot сохранен.');
+      setTimeout(() => setNotice(''), 3000);
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setBusy(false);
     }
@@ -220,10 +230,12 @@ export function SettingsPage() {
     setBusy(true);
     try {
       await api.sendUserbotCode(phone);
-      setNotice('Код отправлен. Введите код из Telegram и нажмите "Войти по коду".');
+      setNotice('Код отправлен в Telegram.');
+      setTimeout(() => setNotice(''), 5000);
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setBusy(false);
     }
@@ -236,15 +248,15 @@ export function SettingsPage() {
     try {
       const result = await api.signInUserbot({ phone, code });
       if (result.requires_2fa) {
-        setNotice('Нужен пароль 2FA. Введите пароль аккаунта и нажмите "Войти по паролю".');
+        setNotice('Введите пароль 2FA.');
       } else if (result.authorized) {
-        setNotice('Вход выполнен успешно.');
-      } else {
-        setNotice('Код принят, но авторизация не завершена.');
+        setNotice('Вход выполнен успешно!');
       }
+      setTimeout(() => setNotice(''), 4000);
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setBusy(false);
     }
@@ -257,13 +269,13 @@ export function SettingsPage() {
     try {
       const result = await api.signInUserbot({ phone, password });
       if (result.authorized) {
-        setNotice('Вход по 2FA-паролю выполнен успешно.');
-      } else {
-        setNotice('Пароль принят, но авторизация не завершена.');
+        setNotice('Вход по паролю успешен!');
       }
+      setTimeout(() => setNotice(''), 4000);
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setBusy(false);
     }
@@ -276,10 +288,12 @@ export function SettingsPage() {
     try {
       await api.logoutUserbot();
       setAvailableChannels([]);
-      setNotice('Вы вышли из userbot.');
+      setNotice('Вы вышли из аккаунта.');
+      setTimeout(() => setNotice(''), 3000);
       await refreshUserbot();
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setBusy(false);
     }
@@ -292,9 +306,11 @@ export function SettingsPage() {
     try {
       const channels = await api.getUserbotChannels();
       setAvailableChannels(channels);
-      setNotice(`Загружено каналов: ${channels.length}.`);
+      setNotice(`Загружено каналов: ${channels.length}`);
+      setTimeout(() => setNotice(''), 3000);
     } catch (e) {
       setError((e as Error).message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setBusy(false);
     }
@@ -302,15 +318,15 @@ export function SettingsPage() {
 
   return (
     <section className="app-content">
+      {notice && <div className="notification-toast">{notice}</div>}
+      {error && <div className="notification-toast error">{error}</div>}
+
       <div className="toolbar">
-        <h2>Настройки системы</h2>
+        <h2>Настройки</h2>
         <button onClick={saveAll} disabled={busy} type="button" style={{ width: 'auto' }}>
-          {busy ? 'Сохранение...' : 'Сохранить всё'}
+          {busy ? '...' : 'Сохранить всё'}
         </button>
       </div>
-
-      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>{error}</div> : null}
-      {notice ? <div className="card" style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>{notice}</div> : null}
 
       <div className="card">
         <h3>Конфигурация Userbot</h3>
