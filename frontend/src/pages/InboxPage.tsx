@@ -195,9 +195,9 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight, isNext }: { item: InboxIte
   const handleDragEnd = (_: any, info: any) => {
     const threshold = 80;
     if (info.offset.x > threshold) {
-      onSwipeRight();
+      onSwipeRight?.();
     } else if (info.offset.x < -threshold) {
-      onSwipeLeft();
+      onSwipeLeft?.();
     }
   };
 
