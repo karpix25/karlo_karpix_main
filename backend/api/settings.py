@@ -55,6 +55,8 @@ async def update_sources(payload: SourceSettings, _user=Depends(require_user)) -
             try:
                 # Try to join and get a cleaner username/id
                 clean_name = await userbot.join_channel_by_link(channel)
+                if not clean_name.startswith('@') and not clean_name.startswith('-'):
+                    clean_name = f"@{clean_name}"
                 normalized_channels.append(clean_name)
             except Exception:
                 normalized_channels.append(channel)

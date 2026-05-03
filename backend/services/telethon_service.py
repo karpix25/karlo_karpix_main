@@ -397,6 +397,12 @@ class TelethonUserbotService:
         )
 
         target = link.strip().replace('@', '')
+        if 't.me/' in target:
+            target = target.split('/')[-1]
+            # Handle potential query params like ?start=...
+            target = target.split('?')[0]
+            
+        logger.info(f"Attempting to join channel: link='{link}', resolved_target='{target}'")
         
         # Invite links formats: 
         # https://t.me/joinchat/XXXXX
