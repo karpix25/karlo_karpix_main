@@ -116,12 +116,11 @@ export default function App() {
   return (
     <main className="app">
       <header className="app-header">
-        <div className="app-header-row">
-          <div className="app-brand">
-            <h1>VACA</h1>
-            <p>Автономный контент-процесс</p>
+        <div className="app-header-row" style={{ justifyContent: 'center' }}>
+          <div className="status-container">
+            <span className={`status-dot ${statusBadge.cls}`}></span>
+            <span className={`status-text ${statusBadge.cls}`}>{statusBadge.text}</span>
           </div>
-          <span className={`status-pill ${statusBadge.cls}`}>{statusBadge.text}</span>
         </div>
       </header>
 

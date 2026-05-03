@@ -44,7 +44,7 @@ body {
 .app {
   max-width: 600px;
   margin: 0 auto;
-  padding: 80px 16px 100px;
+  padding: 50px 16px 100px;
 }
 
 /* Header - iOS Style Blur */
@@ -58,7 +58,9 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 0.5px solid var(--separator);
-  padding: env(safe-area-inset-top, 0px) 16px 12px;
+  padding: env(safe-area-inset-top, 0px) 16px 8px;
+  display: flex;
+  justify-content: center;
 }
 
 .app-brand h1 {
@@ -75,17 +77,50 @@ body {
   font-weight: 400;
 }
 
-.status-pill {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 6px;
-  display: inline-block;
+.status-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+ 
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
 }
 
-.status-pill.ok { color: var(--success); }
-.status-pill.warn { color: #ff9500; }
-.status-pill.bad { color: var(--danger); }
+.status-dot.ok { background-color: var(--success); }
+.status-dot.warn { background-color: #ff9500; }
+.status-dot.bad { background-color: var(--danger); }
+
+.status-dot.ok::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background-color: var(--success);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.status-text {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.status-text.ok { color: var(--success); }
+.status-text.warn { color: #ff9500; }
+.status-text.bad { color: var(--danger); }
 
 /* Bottom Nav - iOS Style */
 .bottom-nav {
