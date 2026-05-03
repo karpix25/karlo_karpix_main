@@ -94,15 +94,19 @@ export function InboxPage() {
       {notice ? <div className="card" style={{ borderColor: 'var(--success)', color: 'var(--success)', zIndex: 10 }}>{notice}</div> : null}
 
       <div className="swipe-container" style={{ position: 'relative', flex: 1, marginTop: '20px' }}>
-        <AnimatePresence>
-          {currentItem && !showFormatSelector && (
-            <SwipeCard
-              key={currentItem.candidate_id}
-              item={currentItem}
-              onSwipeLeft={() => handleReject(currentItem.candidate_id)}
-              onSwipeRight={() => setShowFormatSelector(currentItem)}
-            />
-          )}
+        <AnimatePresence initial={false}>
+          {items.slice(currentIndex, currentIndex + 2).reverse().map((item, index, arr) => {
+            const isTop = index === arr.length - 1;
+            return (
+              <SwipeCard
+                key={item.candidate_id}
+                item={item}
+                isNext={!isTop}
+                onSwipeLeft={isTop ? () => handleReject(item.candidate_id) : undefined}
+                onSwipeRight={isTop ? () => setShowFormatSelector(item) : undefined}
+              />
+            );
+          })}
         </AnimatePresence>
 
         {!currentItem && !loading && (
@@ -112,13 +116,31 @@ export function InboxPage() {
             className="card"
             style={{ textAlign: 'center', padding: '40px', marginTop: '40px' }}
           >
-            <p style={{ color: 'var(--tg-hint)', fontSize: '18px', fontWeight: '500' }}>Все посты разобраны</p>
-            <button onClick={load} style={{ marginTop: '20px', background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
+            <p style={{ color: 'var(--hint)', fontSize: '18px', fontWeight: '500' }}>Все посты разобраны</p>
+            <button onClick={load} style={{ marginTop: '20px', background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
               Обновить список
             </button>
           </motion.div>
         )}
       </div>
+
+      {currentItem && !showFormatSelector && (
+        <div className="action-buttons" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', padding: '16px 0', zIndex: 20 }}>
+          <button 
+            onClick={() => handleReject(currentItem.candidate_id)} 
+            style={{ background: 'rgba(255, 59, 48, 0.1)', color: 'var(--danger)' }}
+          >
+            ❌ Отклонить
+          </button>
+          <button 
+            onClick={() => setShowFormatSelector(currentItem)} 
+            style={{ background: 'rgba(52, 199, 89, 0.1)', color: 'var(--success)' }}
+          >
+            ✅ В работу
+          </button>
+        </div>
+      )}
+
 
       {showFormatSelector && (
         <motion.div
@@ -163,7 +185,7 @@ export function InboxPage() {
   );
 }
 
-function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwipeLeft: () => void, onSwipeRight: () => void }) {
+function SwipeCard({ item, onSwipeLeft, onSwipeRight, isNext }: { item: InboxItem, onSwipeLeft?: () => void, onSwipeRight?: () => void, isNext?: boolean }) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
@@ -190,17 +212,21 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
         left: 0,
         right: 0,
         margin: '0 auto',
-        cursor: 'grab',
-        zIndex: 5,
+        cursor: isNext ? 'default' : 'grab',
+        zIndex: isNext ? 1 : 5,
         touchAction: 'none',
+        scale: isNext ? 0.95 : 1,
+        y: isNext ? 15 : 0,
+        opacity: isNext ? 0.5 : 1,
       }}
-      drag="x"
+      drag={isNext ? false : "x"}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={1}
       onDragEnd={handleDragEnd}
-      whileTap={{ cursor: 'grabbing' }}
+      whileTap={isNext ? {} : { cursor: 'grabbing' }}
       exit={{ x: x.get() < 0 ? '-200%' : '200%', opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      animate={{ scale: isNext ? 0.95 : 1, y: isNext ? 15 : 0, opacity: isNext ? 0.5 : 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
     >
       <div className="card" style={{ height: '60vh', maxHeight: '600px', minHeight: '450px', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0, boxShadow: '0 15px 35px rgba(0,0,0,0.2)' }}>
         <motion.div style={{ opacity: nopeOpacity, position: 'absolute', top: 40, right: 20, border: '4px solid var(--danger)', color: 'var(--danger)', padding: '8px 16px', borderRadius: '12px', fontWeight: 'bold', fontSize: '32px', zIndex: 10, transform: 'rotate(15deg)', pointerEvents: 'none' }}>

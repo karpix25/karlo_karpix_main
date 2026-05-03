@@ -1,5 +1,6 @@
 :root {
   --bg: var(--tg-theme-bg-color, #ffffff);
+  --bg-rgb: 255, 255, 255;
   --secondary-bg: var(--tg-theme-secondary-bg-color, #f2f2f7);
   --text: var(--tg-theme-text-color, #000000);
   --hint: var(--tg-theme-hint-color, #8e8e93);
@@ -17,6 +18,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --bg-rgb: 28, 28, 30;
     --separator: rgba(255, 255, 255, 0.1);
   }
 }
@@ -54,7 +56,7 @@ body {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(var(--tg-theme-bg-color, 255, 255, 255), 0.8);
+  background: rgba(var(--bg-rgb), 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 0.5px solid var(--separator);
@@ -129,7 +131,7 @@ body {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(var(--tg-theme-bg-color, 255, 255, 255), 0.8);
+  background: rgba(var(--bg-rgb), 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 0.5px solid var(--separator);
@@ -239,6 +241,21 @@ input:focus, textarea:focus {
   border-color: var(--accent);
 }
 
+/* Typography */
+h1, h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0 0 16px;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0 0 12px;
+}
+
 /* Meta & Details */
 .meta {
   font-size: 13px;
@@ -246,6 +263,7 @@ input:focus, textarea:focus {
   margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
 details {
@@ -284,6 +302,37 @@ pre {
 
 .app-content {
   animation: fadeIn 0.15s ease-out;
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 16px;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.settings-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  background: var(--secondary-bg);
+  color: var(--hint);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: white;
 }
 
 .notification-toast {

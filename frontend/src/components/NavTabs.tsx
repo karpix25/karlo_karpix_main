@@ -6,9 +6,9 @@ interface Props {
 }
 
 const tabs = [
-  { id: 'inbox', label: 'Входящие' },
-  { id: 'drafts', label: 'Черновики' },
-  { id: 'settings', label: 'Настройки' },
+  { id: 'inbox', label: 'Входящие', icon: '📥' },
+  { id: 'drafts', label: 'Черновики', icon: '📝' },
+  { id: 'settings', label: 'Настройки', icon: '⚙️' },
 ];
 
 export const NavTabs: FC<Props> = ({ value, onChange }) => {
@@ -22,6 +22,7 @@ export const NavTabs: FC<Props> = ({ value, onChange }) => {
             onClick={() => onChange(tab.id)}
             type="button"
           >
+            <span style={{ fontSize: '20px' }}>{tab.icon}</span>
             <span>{tab.label}</span>
           </button>
         );

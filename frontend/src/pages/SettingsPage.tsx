@@ -73,6 +73,7 @@ export function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [activeTab, setActiveTab] = useState<'userbot' | 'sources' | 'ai' | 'system'>('userbot');
 
   const addSourceChannel = (channelRaw: string) => {
     const channel = channelRaw.trim();
@@ -328,324 +329,269 @@ export function SettingsPage() {
         </button>
       </div>
 
-      <div className="card">
-        <h3>Конфигурация Userbot</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div>
-            <label>API ID</label>
-            <input
-              type="number"
-              min={0}
-              value={userbotConfig.api_id}
-              onChange={(e) => setUserbotConfig({ ...userbotConfig, api_id: Number(e.target.value) })}
-            />
-          </div>
-          <div>
-            <label>Имя сессии</label>
-            <input
-              value={userbotConfig.session_name}
-              onChange={(e) => setUserbotConfig({ ...userbotConfig, session_name: e.target.value })}
-              placeholder="vaca_userbot"
-            />
-          </div>
-        </div>
-        <label>API Hash</label>
-        <input
-          value={apiHashInput}
-          onChange={(e) => setApiHashInput(e.target.value)}
-          placeholder={userbotConfig.has_api_hash ? 'Сохранён. Введите только для замены.' : 'Введите API hash'}
-          type="password"
-        />
-        <button onClick={saveUserbotConfig} disabled={busy} type="button" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
-          Сохранить конфиг Userbot
-        </button>
+      <div className="settings-tabs">
+        <button className={`tab ${activeTab === 'userbot' ? 'active' : ''}`} onClick={() => setActiveTab('userbot')}>Аккаунт</button>
+        <button className={`tab ${activeTab === 'sources' ? 'active' : ''}`} onClick={() => setActiveTab('sources')}>Источники</button>
+        <button className={`tab ${activeTab === 'ai' ? 'active' : ''}`} onClick={() => setActiveTab('ai')}>AI & Память</button>
+        <button className={`tab ${activeTab === 'system' ? 'active' : ''}`} onClick={() => setActiveTab('system')}>Система</button>
       </div>
 
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3>Авторизация Userbot</h3>
-          <span className={`status-pill ${userbot.authorized ? 'ok' : 'bad'}`}>
-            {userbot.authorized ? 'АВТОРИЗОВАН' : 'НУЖЕН ВХОД'}
-          </span>
-        </div>
-        
-        <div style={{ background: 'var(--field-bg)', padding: '12px', borderRadius: '12px', marginBottom: '20px' }}>
-          <p className="meta" style={{ margin: 0 }}>
-             {userbot.me_username ? `@${userbot.me_username}` : 'Аккаунт не подключен'} 
-             {userbot.me_phone ? ` · ${userbot.me_phone}` : ''}
-          </p>
-          <p className="meta" style={{ margin: '4px 0 0' }}>Сессия: {userbot.session_name || '-'}</p>
-        </div>
-
-        <label>Телефон (международный формат)</label>
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1234567890" />
-
-        <div className="actions" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
-          <button onClick={sendCode} disabled={busy || !userbot.configured || !phone.trim()} type="button" style={{ fontSize: '12px' }}>
-            Код
-          </button>
-          <button onClick={refreshUserbot} disabled={busy} type="button" style={{ fontSize: '12px', background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
-            Обновить
-          </button>
-          <button onClick={logoutUserbot} disabled={busy || !userbot.authorized} type="button" style={{ fontSize: '12px', background: 'var(--danger)', color: 'white' }}>
-            Выйти
-          </button>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px' }}>
-          <div>
-            <label>Код</label>
-            <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="12345" />
-          </div>
-          <div>
-            <label>Пароль 2FA</label>
+      {activeTab === 'userbot' && (
+        <>
+          <div className="card">
+            <h3>Конфигурация Userbot</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label>API ID</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={userbotConfig.api_id}
+                  onChange={(e) => setUserbotConfig({ ...userbotConfig, api_id: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label>Имя сессии</label>
+                <input
+                  value={userbotConfig.session_name}
+                  onChange={(e) => setUserbotConfig({ ...userbotConfig, session_name: e.target.value })}
+                  placeholder="vaca_userbot"
+                />
+              </div>
+            </div>
+            <label>API Hash</label>
             <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Если включён"
+              value={apiHashInput}
+              onChange={(e) => setApiHashInput(e.target.value)}
+              placeholder={userbotConfig.has_api_hash ? 'Сохранён. Введите только для замены.' : 'Введите API hash'}
               type="password"
             />
+            <button onClick={saveUserbotConfig} disabled={busy} type="button" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
+              Сохранить конфиг Userbot
+            </button>
           </div>
-        </div>
 
-        <div className="actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          <button onClick={signInByCode} disabled={busy || !phone.trim() || !code.trim()} type="button">
-            Войти по коду
-          </button>
-          <button onClick={signInByPassword} disabled={busy || !password.trim()} type="button">
-            По паролю
-          </button>
-        </div>
-      </div>
+          <div className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3>Авторизация Userbot</h3>
+              <span className={`status-pill ${userbot.authorized ? 'ok' : 'bad'}`}>
+                {userbot.authorized ? 'АВТОРИЗОВАН' : 'НУЖЕН ВХОД'}
+              </span>
+            </div>
+            
+            <div style={{ background: 'var(--field-bg)', padding: '12px', borderRadius: '12px', marginBottom: '20px' }}>
+              <p className="meta" style={{ margin: 0 }}>
+                 {userbot.me_username ? `@${userbot.me_username}` : 'Аккаунт не подключен'} 
+                 {userbot.me_phone ? ` · ${userbot.me_phone}` : ''}
+              </p>
+              <p className="meta" style={{ margin: '4px 0 0' }}>Сессия: {userbot.session_name || '-'}</p>
+            </div>
 
-      <div className="card">
-        <h3>Антибан-настройки</h3>
-        <label>
-          <input
-            type="checkbox"
-            checked={antiAbuse.enabled}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, enabled: e.target.checked })}
-          />
-          Включить anti-ban защиту
-        </label>
-        <label>Сообщений на канал</label>
-        <input
-          type="number"
-          min={1}
-          value={antiAbuse.messages_per_channel}
-          onChange={(e) => setAntiAbuse({ ...antiAbuse, messages_per_channel: Number(e.target.value) })}
-        />
-        <label>Jitter между каналами Min/Max (мс)</label>
-        <div className="inline">
-          <input
-            type="number"
-            min={0}
-            value={antiAbuse.channel_jitter_min_ms}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, channel_jitter_min_ms: Number(e.target.value) })}
-          />
-          <input
-            type="number"
-            min={0}
-            value={antiAbuse.channel_jitter_max_ms}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, channel_jitter_max_ms: Number(e.target.value) })}
-          />
-        </div>
-        <label>Размер batch</label>
-        <input
-          type="number"
-          min={1}
-          value={antiAbuse.batch_size}
-          onChange={(e) => setAntiAbuse({ ...antiAbuse, batch_size: Number(e.target.value) })}
-        />
-        <label>Пауза между batch Min/Max (сек)</label>
-        <div className="inline">
-          <input
-            type="number"
-            min={0}
-            value={antiAbuse.batch_pause_min_s}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, batch_pause_min_s: Number(e.target.value) })}
-          />
-          <input
-            type="number"
-            min={0}
-            value={antiAbuse.batch_pause_max_s}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, batch_pause_max_s: Number(e.target.value) })}
-          />
-        </div>
-        <label>Максимум повторов</label>
-        <input
-          type="number"
-          min={0}
-          value={antiAbuse.max_retries}
-          onChange={(e) => setAntiAbuse({ ...antiAbuse, max_retries: Number(e.target.value) })}
-        />
-        <label>Backoff повтора (через запятую, сек)</label>
-        <input
-          value={retryBackoffInput}
-          onChange={(e) => setRetryBackoffInput(e.target.value)}
-          placeholder="2,8,20"
-        />
-        <label>Доп. jitter для FloodWait Min/Max (сек)</label>
-        <div className="inline">
-          <input
-            type="number"
-            min={0}
-            value={antiAbuse.floodwait_extra_jitter_min_s}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, floodwait_extra_jitter_min_s: Number(e.target.value) })}
-          />
-          <input
-            type="number"
-            min={0}
-            value={antiAbuse.floodwait_extra_jitter_max_s}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, floodwait_extra_jitter_max_s: Number(e.target.value) })}
-          />
-        </div>
-        <label>Порог ошибок канала</label>
-        <input
-          type="number"
-          min={1}
-          value={antiAbuse.channel_error_threshold}
-          onChange={(e) => setAntiAbuse({ ...antiAbuse, channel_error_threshold: Number(e.target.value) })}
-        />
-        <label>Cooldown канала по умолчанию (сек)</label>
-        <input
-          type="number"
-          min={1}
-          value={antiAbuse.channel_cooldown_default_s}
-          onChange={(e) => setAntiAbuse({ ...antiAbuse, channel_cooldown_default_s: Number(e.target.value) })}
-        />
-        <label>
-          <input
-            type="checkbox"
-            checked={antiAbuse.manual_bypass_cooldown}
-            onChange={(e) => setAntiAbuse({ ...antiAbuse, manual_bypass_cooldown: e.target.checked })}
-          />
-          Разрешить ручному запуску обходить cooldown
-        </label>
-      </div>
+            <label>Телефон (международный формат)</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1234567890" />
 
-      <div className="card">
-        <div className="toolbar">
-          <h3>Статус защиты каналов</h3>
-          <button onClick={refreshGuardStatus} type="button">Обновить</button>
-        </div>
-        <p className="meta">Каналы в cooldown</p>
-        <div className="list compact-list">
-          {guardStatus.cooldowns.map((item) => (
-            <article key={item.channel_username} className="card compact-card">
-              <p><strong>{item.channel_username}</strong></p>
-              <p className="meta">осталось сек: {item.seconds_left} · ошибок подряд: {item.consecutive_errors}</p>
-              <p className="meta">последняя ошибка: {item.last_error_code || '-'}</p>
-            </article>
-          ))}
-          {guardStatus.cooldowns.length === 0 ? <p className="meta">Нет каналов в cooldown.</p> : null}
-        </div>
-
-        <p className="meta">Последние события защиты</p>
-        <div className="list compact-list">
-          {guardStatus.recent_events.slice(0, 30).map((event) => (
-            <article key={event.id} className="card compact-card">
-              <p><strong>{event.channel_username}</strong> · {event.event_type}</p>
-              <p className="meta">{event.created_at}</p>
-              <pre>{JSON.stringify(event.event_payload, null, 2)}</pre>
-            </article>
-          ))}
-          {guardStatus.recent_events.length === 0 ? <p className="meta">Событий пока нет.</p> : null}
-        </div>
-      </div>
-
-      <div className="card">
-        <h3>Каналы-источники</h3>
-        <div className="inline">
-          <input value={newChannel} onChange={(e) => setNewChannel(e.target.value)} placeholder="@username или ссылка-приглашение" />
-          <button onClick={addChannel} type="button">Добавить</button>
-        </div>
-        <ul className="channel-list">
-          {sources.channels.map((channel) => (
-            <li key={channel}>
-              <span>{channel}</span>
-              <button type="button" className="danger-inline" onClick={() => removeChannel(channel)}>Удалить</button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="card">
-        <h3>Подключение каналов из Userbot</h3>
-        <button onClick={loadChannelsFromUserbot} disabled={busy || !userbot.authorized} type="button">Загрузить мои каналы</button>
-        {!userbot.authorized ? <p className="meta">Сначала авторизуйте userbot, чтобы получить список каналов.</p> : null}
-        <div className="list compact-list">
-          {availableChannels.map((channel) => (
-            <article key={channel.id} className="card compact-card">
-              <p><strong>{channel.title}</strong></p>
-              <p className="meta">{channel.username}</p>
-              <button
-                onClick={() => addSourceChannel(channel.username)}
-                type="button"
-              >
-                Добавить в источники
+            <div className="actions" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+              <button onClick={sendCode} disabled={busy || !userbot.configured || !phone.trim()} type="button" style={{ fontSize: '12px' }}>
+                Код
               </button>
-            </article>
-          ))}
-          {availableChannels.length === 0 ? <p className="meta">Каналы пока не загружены.</p> : null}
+              <button onClick={refreshUserbot} disabled={busy} type="button" style={{ fontSize: '12px', background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
+                Обновить
+              </button>
+              <button onClick={logoutUserbot} disabled={busy || !userbot.authorized} type="button" style={{ fontSize: '12px', background: 'var(--danger)', color: 'white' }}>
+                Выйти
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px' }}>
+              <div>
+                <label>Код</label>
+                <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="12345" />
+              </div>
+              <div>
+                <label>Пароль 2FA</label>
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Если включён"
+                  type="password"
+                />
+              </div>
+            </div>
+
+            <div className="actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button onClick={signInByCode} disabled={busy || !phone.trim() || !code.trim()} type="button">
+                Войти по коду
+              </button>
+              <button onClick={signInByPassword} disabled={busy || !password.trim()} type="button">
+                По паролю
+              </button>
+            </div>
+          </div>
+          
+          <div className="card">
+            <h3>Подключение каналов из Userbot</h3>
+            <button onClick={loadChannelsFromUserbot} disabled={busy || !userbot.authorized} type="button">Загрузить мои каналы</button>
+            {!userbot.authorized ? <p className="meta">Сначала авторизуйте userbot, чтобы получить список каналов.</p> : null}
+            <div className="list compact-list">
+              {availableChannels.map((channel) => (
+                <article key={channel.id} className="card compact-card">
+                  <p><strong>{channel.title}</strong></p>
+                  <p className="meta">{channel.username}</p>
+                  <button
+                    onClick={() => addSourceChannel(channel.username)}
+                    type="button"
+                  >
+                    Добавить в источники
+                  </button>
+                </article>
+              ))}
+              {availableChannels.length === 0 ? <p className="meta">Каналы пока не загружены.</p> : null}
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'sources' && (
+        <div className="card">
+          <h3>Каналы-источники</h3>
+          <div className="inline">
+            <input value={newChannel} onChange={(e) => setNewChannel(e.target.value)} placeholder="@username или ссылка-приглашение" />
+            <button onClick={addChannel} type="button">Добавить</button>
+          </div>
+          <ul className="channel-list">
+            {sources.channels.map((channel) => (
+              <li key={channel}>
+                <span>{channel}</span>
+                <button type="button" className="danger-inline" onClick={() => removeChannel(channel)}>Удалить</button>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
+      )}
 
-      <div className="card">
-        <h3>Расписание</h3>
-        <label>Интервал (минуты)</label>
-        <input
-          type="number"
-          min={1}
-          max={1440}
-          value={schedule.interval_minutes}
-          onChange={(e) => setSchedule({ interval_minutes: Number(e.target.value) })}
-        />
-      </div>
+      {activeTab === 'ai' && (
+        <>
+          <div className="card">
+            <h3>Тогглы правил</h3>
+            <label>
+              <input
+                type="checkbox"
+                checked={skills.strict_links}
+                onChange={(e) => setSkills({ ...skills, strict_links: e.target.checked })}
+              />
+              Строгая проверка ссылок (strict_links)
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={skills.ban_giveaways}
+                onChange={(e) => setSkills({ ...skills, ban_giveaways: e.target.checked })}
+              />
+              Блокировать giveaway/промо (ban_giveaways)
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={skills.prefer_technical_content}
+                onChange={(e) => setSkills({ ...skills, prefer_technical_content: e.target.checked })}
+              />
+              Предпочитать технический контент (prefer_technical_content)
+            </label>
+          </div>
 
-      <div className="card">
-        <h3>Тогглы правил</h3>
-        <label>
-          <input
-            type="checkbox"
-            checked={skills.strict_links}
-            onChange={(e) => setSkills({ ...skills, strict_links: e.target.checked })}
-          />
-          Строгая проверка ссылок (strict_links)
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={skills.ban_giveaways}
-            onChange={(e) => setSkills({ ...skills, ban_giveaways: e.target.checked })}
-          />
-          Блокировать giveaway/промо (ban_giveaways)
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={skills.prefer_technical_content}
-            onChange={(e) => setSkills({ ...skills, prefer_technical_content: e.target.checked })}
-          />
-          Предпочитать технический контент (prefer_technical_content)
-        </label>
-      </div>
+          <div className="card">
+            <h3>Предпросмотр памяти</h3>
+            <details>
+              <summary>identity.md</summary>
+              <pre>{memory.identity}</pre>
+            </details>
+            <details>
+              <summary>sorting_rules.md</summary>
+              <pre>{memory.sorting_rules}</pre>
+            </details>
+            <details>
+              <summary>offers.md</summary>
+              <pre>{memory.offers}</pre>
+            </details>
+          </div>
+        </>
+      )}
 
-      <div className="card">
-        <h3>Предпросмотр памяти</h3>
-        <details>
-          <summary>identity.md</summary>
-          <pre>{memory.identity}</pre>
-        </details>
-        <details>
-          <summary>sorting_rules.md</summary>
-          <pre>{memory.sorting_rules}</pre>
-        </details>
-        <details>
-          <summary>offers.md</summary>
-          <pre>{memory.offers}</pre>
-        </details>
-      </div>
+      {activeTab === 'system' && (
+        <>
+          <div className="card">
+            <h3>Расписание</h3>
+            <label>Интервал (минуты)</label>
+            <input
+              type="number"
+              min={1}
+              max={1440}
+              value={schedule.interval_minutes}
+              onChange={(e) => setSchedule({ interval_minutes: Number(e.target.value) })}
+            />
+          </div>
+
+          <div className="card">
+            <h3>Антибан-настройки</h3>
+            <label>
+              <input
+                type="checkbox"
+                checked={antiAbuse.enabled}
+                onChange={(e) => setAntiAbuse({ ...antiAbuse, enabled: e.target.checked })}
+              />
+              Включить anti-ban защиту
+            </label>
+            <details>
+              <summary>Показать расширенные параметры</summary>
+              <div style={{ marginTop: '12px' }}>
+                <label>Сообщений на канал</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={antiAbuse.messages_per_channel}
+                  onChange={(e) => setAntiAbuse({ ...antiAbuse, messages_per_channel: Number(e.target.value) })}
+                />
+                <label>Максимум повторов</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={antiAbuse.max_retries}
+                  onChange={(e) => setAntiAbuse({ ...antiAbuse, max_retries: Number(e.target.value) })}
+                />
+                <label>Порог ошибок канала</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={antiAbuse.channel_error_threshold}
+                  onChange={(e) => setAntiAbuse({ ...antiAbuse, channel_error_threshold: Number(e.target.value) })}
+                />
+              </div>
+            </details>
+          </div>
+
+          <div className="card">
+            <div className="toolbar">
+              <h3>Статус защиты каналов</h3>
+              <button onClick={refreshGuardStatus} type="button" style={{ width: 'auto' }}>Обновить</button>
+            </div>
+            <p className="meta">Каналы в cooldown: {guardStatus.cooldowns.length}</p>
+            {guardStatus.cooldowns.length > 0 && (
+              <details>
+                <summary>Список каналов</summary>
+                <div className="list compact-list" style={{ marginTop: '12px' }}>
+                  {guardStatus.cooldowns.map((item) => (
+                    <article key={item.channel_username} className="card compact-card">
+                      <p><strong>{item.channel_username}</strong></p>
+                      <p className="meta">осталось сек: {item.seconds_left} · ошибок: {item.consecutive_errors}</p>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+        </>
+      )}
     </section>
   );
+
 }
