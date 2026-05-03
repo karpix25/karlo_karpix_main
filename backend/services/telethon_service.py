@@ -423,12 +423,13 @@ class TelethonUserbotService:
                         return link # fallback
                     else:
                         # Public username or already joined
-                        entity = await client.get_entity(target)
-                        if getattr(entity, 'username', None):
-                            return entity.username
-                        
-                        await client(JoinChannelRequest(entity))
-                        return getattr(entity, 'username', str(entity.id))
+                        try:
+                            entity = await client.get_entity(target)
+                            await client(JoinChannelRequest(entity))
+                            return getattr(entity, 'username', target)
+                        except Exception as e:
+                            logger.warning(f"Failed to join public channel {target}: {e}")
+                            return target
                 except Exception as e:
                     logger.warning(f"Failed to join channel {link}: {e}")
                     return target
