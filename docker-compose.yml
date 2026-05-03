@@ -36,6 +36,7 @@ services:
       - SCHEDULER_INTERVAL_MINUTES=${SCHEDULER_INTERVAL_MINUTES:-30}
     volumes:
       - backend_data:/data
+      - backend_media:/app/backend/media
     expose:
       - '8000'
     restart: unless-stopped
@@ -56,3 +57,4 @@ services:
 
 volumes:
   backend_data:
+  backend_media:

@@ -214,9 +214,9 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
         {item.media_paths && item.media_paths.length > 0 ? (
           <div style={{ height: '260px', background: '#000', overflow: 'hidden' }}>
             {item.media_type === 'MessageMediaDocument' || item.media_type === 'Document' ? (
-              <video src={`${API_BASE}${item.media_paths[0]}`} controls={false} autoPlay loop muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <video src={item.media_paths[0].startsWith('/media') ? item.media_paths[0] : `${API_BASE}${item.media_paths[0]}`} controls={false} autoPlay loop muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <img src={`${API_BASE}${item.media_paths[0]}`} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={item.media_paths[0].startsWith('/media') ? item.media_paths[0] : `${API_BASE}${item.media_paths[0]}`} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             )}
           </div>
         ) : (
