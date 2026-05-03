@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     default_language: str = 'ru'
 
     telegram_bot_token: str = ''
-    telegram_initdata_max_age_seconds: int = 86400
+    telegram_initdata_max_age_seconds: int = 7776000
     auth_allow_insecure_dev: bool = True
     admin_user_id: int = 0
     userbot_secrets_key: str = ''
