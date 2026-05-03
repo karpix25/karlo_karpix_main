@@ -11,6 +11,7 @@ export function InboxPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFormatSelector, setShowFormatSelector] = useState<InboxItem | null>(null);
   const [decisionLoading, setDecisionLoading] = useState<Record<number, boolean>>({});
+  const [notice, setNotice] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -29,11 +30,15 @@ export function InboxPage() {
   const triggerRun = async () => {
     setLoading(true);
     setError('');
+    setNotice('');
     try {
       await api.triggerRun();
+      setNotice('Парсинг запущен. Новые посты появятся через несколько секунд.');
+      setTimeout(() => setNotice(''), 5000);
       await load();
     } catch (e) {
       setError((e as Error).message);
+    } finally {
       setLoading(false);
     }
   };
@@ -41,24 +46,29 @@ export function InboxPage() {
   const handleDecision = async (candidateId: number, format: string) => {
     setDecisionLoading(prev => ({ ...prev, [candidateId]: true }));
     setError('');
+    // Optimistic UI
+    setCurrentIndex(prev => prev + 1);
+    setShowFormatSelector(null);
     try {
       await api.postDecision(candidateId, format);
-      setShowFormatSelector(null);
-      // Move to next card
-      setCurrentIndex(prev => prev + 1);
     } catch (e) {
       setError((e as Error).message);
+      // Rollback on error
+      setCurrentIndex(prev => prev - 1);
     } finally {
       setDecisionLoading(prev => ({ ...prev, [candidateId]: false }));
     }
   };
 
   const handleReject = async (candidateId: number) => {
+    // Optimistic UI
+    setCurrentIndex(prev => prev + 1);
     try {
       await api.rejectInboxItem(candidateId);
-      setCurrentIndex(prev => prev + 1);
     } catch (e) {
       setError((e as Error).message);
+      // Rollback on error
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
@@ -77,7 +87,8 @@ export function InboxPage() {
         </button>
       </div>
 
-      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', zIndex: 10 }}>⚠️ {error}</div> : null}
+      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', zIndex: 10 }}>{error}</div> : null}
+      {notice ? <div className="card" style={{ borderColor: 'var(--success)', color: 'var(--success)', zIndex: 10 }}>{notice}</div> : null}
 
       <div className="swipe-container" style={{ position: 'relative', flex: 1, marginTop: '20px' }}>
         <AnimatePresence>
@@ -206,8 +217,8 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
             )}
           </div>
         ) : (
-          <div style={{ height: '140px', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }}>
-            📄
+          <div style={{ height: '140px', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: 'white' }}>
+            Нет медиа
           </div>
         )}
 
