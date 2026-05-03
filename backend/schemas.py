@@ -30,12 +30,16 @@ class InboxItem(BaseModel):
     raw_message_id: int
     channel_username: str
     text: str
+    media_type: str | None = None
+    media_paths: list[str] = Field(default_factory=list)
     summary: str
     relevance_score: float
     status: CandidateStatus
     reason: str | None
     created_at: datetime
 
+class FormatDecisionRequest(BaseModel):
+    chosen_format: str
 
 class DraftItem(BaseModel):
     id: int

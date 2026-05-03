@@ -11,6 +11,9 @@ class CandidateStatus(str, Enum):
 class DraftPlatform(str, Enum):
     telegram = 'telegram'
     threads = 'threads'
+    reels = '5s Reels'
+    avatar = 'Аватар'
+    carousel = 'Карусель'
 
 
 class DraftStatus(str, Enum):

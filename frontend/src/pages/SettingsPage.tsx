@@ -296,76 +296,105 @@ export function SettingsPage() {
   };
 
   return (
-    <section>
+  return (
+    <section className="app-content">
       <div className="toolbar">
-        <h2>Настройки</h2>
-        <button onClick={saveAll} disabled={busy} type="button">Сохранить всё</button>
+        <h2>⚙️ Настройки системы</h2>
+        <button onClick={saveAll} disabled={busy} type="button">
+          {busy ? '⏳ Сохранение...' : '💾 Сохранить всё'}
+        </button>
       </div>
 
-      {error ? <p className="error">{error}</p> : null}
-      {notice ? <p className="success">{notice}</p> : null}
+      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>⚠️ {error}</div> : null}
+      {notice ? <div className="card" style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>✅ {notice}</div> : null}
 
       <div className="card">
-        <h3>Конфигурация Userbot</h3>
-        <label>API ID</label>
-        <input
-          type="number"
-          min={0}
-          value={userbotConfig.api_id}
-          onChange={(e) => setUserbotConfig({ ...userbotConfig, api_id: Number(e.target.value) })}
-        />
+        <h3>🤖 Конфигурация Userbot</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div>
+            <label>API ID</label>
+            <input
+              type="number"
+              min={0}
+              value={userbotConfig.api_id}
+              onChange={(e) => setUserbotConfig({ ...userbotConfig, api_id: Number(e.target.value) })}
+            />
+          </div>
+          <div>
+            <label>Имя сессии</label>
+            <input
+              value={userbotConfig.session_name}
+              onChange={(e) => setUserbotConfig({ ...userbotConfig, session_name: e.target.value })}
+              placeholder="vaca_userbot"
+            />
+          </div>
+        </div>
         <label>API Hash</label>
         <input
           value={apiHashInput}
           onChange={(e) => setApiHashInput(e.target.value)}
-          placeholder={userbotConfig.has_api_hash ? 'Сохранён. Введите только для замены.' : 'Введите API hash'}
+          placeholder={userbotConfig.has_api_hash ? '🔒 Сохранён. Введите только для замены.' : 'Введите API hash'}
           type="password"
         />
-        <label>Имя сессии</label>
-        <input
-          value={userbotConfig.session_name}
-          onChange={(e) => setUserbotConfig({ ...userbotConfig, session_name: e.target.value })}
-          placeholder="vaca_userbot"
-        />
-        <button onClick={saveUserbotConfig} disabled={busy} type="button">Сохранить конфиг Userbot</button>
+        <button onClick={saveUserbotConfig} disabled={busy} type="button" style={{ background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
+          💾 Сохранить конфиг Userbot
+        </button>
       </div>
 
       <div className="card">
-        <h3>Авторизация Userbot</h3>
-        <p className="meta">Сконфигурирован: {userbot.configured ? 'да' : 'нет'}</p>
-        <p className={userbot.authorized ? 'success' : 'meta'}>
-          Статус входа: {userbot.authorized ? 'выполнен' : 'не выполнен'} · Сессия: {userbot.session_name || '-'}
-        </p>
-        {userbot.me_username || userbot.me_phone ? (
-          <p className="meta">Account: {userbot.me_username ? `@${userbot.me_username}` : '-'} {userbot.me_phone ? `(${userbot.me_phone})` : ''}</p>
-        ) : null}
-        {!userbot.authorized && userbot.pending_phone ? (
-          <p className="meta">Ожидается код для номера: {userbot.pending_phone}</p>
-        ) : null}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3>🔑 Авторизация Userbot</h3>
+          <span className={`status-pill ${userbot.authorized ? 'ok' : 'bad'}`}>
+            {userbot.authorized ? 'АВТОРИЗОВАН' : 'НУЖЕН ВХОД'}
+          </span>
+        </div>
+        
+        <div style={{ background: 'var(--field-bg)', padding: '12px', borderRadius: '12px', marginBottom: '20px' }}>
+          <p className="meta" style={{ margin: 0 }}>
+             {userbot.me_username ? `👤 @${userbot.me_username}` : '👤 Аккаунт не подключен'} 
+             {userbot.me_phone ? ` · 📞 ${userbot.me_phone}` : ''}
+          </p>
+          <p className="meta" style={{ margin: '4px 0 0' }}>📂 Сессия: {userbot.session_name || '-'}</p>
+        </div>
 
         <label>Телефон (международный формат)</label>
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1234567890" />
 
-        <div className="actions auth-actions">
-          <button onClick={sendCode} disabled={busy || !userbot.configured || !phone.trim()} type="button">Отправить код</button>
-          <button onClick={refreshUserbot} disabled={busy} type="button">Обновить статус</button>
-          <button onClick={logoutUserbot} disabled={busy || !userbot.authorized} type="button">Выйти</button>
+        <div className="actions" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '16px' }}>
+          <button onClick={sendCode} disabled={busy || !userbot.configured || !phone.trim()} type="button" style={{ fontSize: '12px' }}>
+            📲 Код
+          </button>
+          <button onClick={refreshUserbot} disabled={busy} type="button" style={{ fontSize: '12px', background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
+            🔄 Обновить
+          </button>
+          <button onClick={logoutUserbot} disabled={busy || !userbot.authorized} type="button" style={{ fontSize: '12px', background: 'var(--danger)', color: 'white' }}>
+            🚪 Выйти
+          </button>
         </div>
 
-        <label>Код</label>
-        <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="12345" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px' }}>
+          <div>
+            <label>Код</label>
+            <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="12345" />
+          </div>
+          <div>
+            <label>Пароль 2FA</label>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Если включён"
+              type="password"
+            />
+          </div>
+        </div>
 
-        <label>Пароль 2FA (если включён)</label>
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Пароль 2FA Telegram"
-          type="password"
-        />
-
-        <div className="actions auth-actions">
-          <button onClick={signInByCode} disabled={busy || !phone.trim() || !code.trim()} type="button">Войти по коду</button>
-          <button onClick={signInByPassword} disabled={busy || !password.trim()} type="button">Войти по паролю</button>
+        <div className="actions" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <button onClick={signInByCode} disabled={busy || !phone.trim() || !code.trim()} type="button">
+            ✅ Войти по коду
+          </button>
+          <button onClick={signInByPassword} disabled={busy || !password.trim()} type="button">
+            🔑 По паролю
+          </button>
         </div>
       </div>
 

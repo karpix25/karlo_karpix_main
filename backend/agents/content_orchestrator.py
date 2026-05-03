@@ -37,11 +37,21 @@ class ContentOrchestratorAgent:
                 hashtags='#личныйбренд #архитектура #ai',
             )
 
+        platform_prompt = ""
+        if platform == '5s Reels':
+            platform_prompt = 'Формат: Короткий 5-секундный Reels. Напиши 1 цепляющий заголовок для видео и краткий текст для описания (до 30 слов).'
+        elif platform == 'Аватар':
+            platform_prompt = 'Формат: Скрипт для говорящего AI-аватара. Напиши короткий, энергичный спитч на 15-20 секунд (примерно 50-70 слов).'
+        elif platform == 'Карусель':
+            platform_prompt = 'Формат: Текст для карточек карусели в Instagram/Threads. Разбей текст на 3-5 коротких слайдов.'
+        else:
+            platform_prompt = f'Платформа: {platform}.'
+
         prompt = (
             'Сгенерируй пост под личный бренд Carlo на русском языке. '
-            f'Платформа: {platform}. '\
-            f'Резюме источника: {summary}. '\
-            f'Исходный текст: {source_text}. '\
+            f'{platform_prompt} '
+            f'Резюме источника: {summary}. '
+            f'Исходный текст: {source_text}. '
             'Требования: без воды, практично, tone-of-voice архитектора и предпринимателя, '
             'добавь отдельные блоки CTA и hashtags.'
         )

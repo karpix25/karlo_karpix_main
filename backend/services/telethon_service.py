@@ -27,6 +27,8 @@ class IngestedMessage:
     message_id: int
     text: str
     posted_at: str
+    media_type: str | None = None
+    media_paths_json: str | None = None
 
 
 @dataclass
@@ -248,6 +250,11 @@ class TelethonUserbotService:
 
         from telethon import TelegramClient  # lazy import
         from telethon.errors import FloodWaitError
+        import json
+        from pathlib import Path
+        
+        media_dir = Path('./backend/media')
+        media_dir.mkdir(parents=True, exist_ok=True)
 
         retried_channels: set[str] = set()
         floodwait_channels: set[str] = set()
@@ -271,12 +278,27 @@ class TelethonUserbotService:
                             async for message in client.iter_messages(channel, limit=limit_per_channel):
                                 if not message or not getattr(message, 'message', None):
                                     continue
+                                media_type = None
+                                media_paths = []
+                                if getattr(message, 'media', None):
+                                    try:
+                                        media_type = type(message.media).__name__
+                                        filename = f"{channel}_{message.id}"
+                                        path = await client.download_media(message, file=str(media_dir / filename))
+                                        if path:
+                                            rel_path = f"/media/{Path(path).name}"
+                                            media_paths.append(rel_path)
+                                    except Exception as e:
+                                        logger.error(f"Failed to download media: {e}")
+
                                 channel_messages.append(
                                     IngestedMessage(
                                         channel_username=channel,
                                         message_id=int(message.id),
                                         text=str(message.message),
                                         posted_at=(message.date or datetime.now(tz=timezone.utc)).isoformat(),
+                                        media_type=media_type,
+                                        media_paths_json=json.dumps(media_paths) if media_paths else None,
                                     )
                                 )
                             channel_success = True

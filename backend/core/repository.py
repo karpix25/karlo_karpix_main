@@ -15,7 +15,9 @@ class RawMessageInput:
     channel_username: str
     message_id: int
     text: str
-    posted_at: str | None
+    media_type: str | None = None
+    media_paths_json: str | None = None
+    posted_at: str | None = None
 
 
 def utc_now_iso() -> str:
@@ -128,13 +130,15 @@ async def insert_raw_message(message: RawMessageInput) -> int | None:
     async with get_db() as db:
         cur = await db.execute(
             '''
-            INSERT OR IGNORE INTO raw_messages(channel_username, message_id, text, posted_at)
-            VALUES(?, ?, ?, ?)
+            INSERT OR IGNORE INTO raw_messages(channel_username, message_id, text, media_type, media_paths_json, posted_at)
+            VALUES(?, ?, ?, ?, ?, ?)
             ''',
             (
                 message.channel_username,
                 message.message_id,
                 message.text,
+                message.media_type,
+                message.media_paths_json,
                 message.posted_at,
             ),
         )
@@ -190,6 +194,8 @@ async def list_inbox(status: str | None = None) -> list[dict[str, Any]]:
             c.raw_message_id,
             r.channel_username,
             r.text,
+            r.media_type,
+            r.media_paths_json,
             c.summary,
             c.relevance_score,
             c.status,
@@ -207,7 +213,32 @@ async def list_inbox(status: str | None = None) -> list[dict[str, Any]]:
     async with get_db() as db:
         cur = await db.execute(query, tuple(params))
         rows = await cur.fetchall()
-        return [dict(row) for row in rows]
+        out = []
+        for row in rows:
+            d = dict(row)
+            try:
+                d['media_paths'] = json.loads(d.pop('media_paths_json') or '[]')
+            except Exception:
+                d['media_paths'] = []
+            out.append(d)
+        return out
+
+async def record_user_decision(
+    candidate_id: int,
+    original_text: str,
+    original_media_type: str | None,
+    chosen_format: str,
+    generated_content: str | None
+) -> None:
+    async with get_db() as db:
+        await db.execute(
+            '''
+            INSERT INTO user_decisions(candidate_id, original_text, original_media_type, chosen_format, generated_content)
+            VALUES(?, ?, ?, ?, ?)
+            ''',
+            (candidate_id, original_text, original_media_type, chosen_format, generated_content)
+        )
+        await db.commit()
 
 
 async def list_drafts(platform: str | None = None, status: str | None = None) -> list[dict[str, Any]]:

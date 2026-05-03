@@ -42,6 +42,12 @@ app.include_router(inbox_router)
 app.include_router(drafts_router)
 app.include_router(settings_router)
 
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+media_path = Path(__file__).parent / 'media'
+media_path.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=str(media_path)), name="media")
+
 
 @app.get('/health')
 async def healthcheck() -> dict[str, str]:

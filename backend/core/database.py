@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS raw_messages (
     channel_username TEXT NOT NULL,
     message_id INTEGER NOT NULL,
     text TEXT NOT NULL,
+    media_type TEXT,
+    media_paths_json TEXT,
     posted_at TEXT,
     fetched_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(channel_username, message_id)
@@ -37,6 +39,17 @@ CREATE TABLE IF NOT EXISTS content_candidates (
     reason TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(raw_message_id) REFERENCES raw_messages(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER NOT NULL,
+    original_text TEXT NOT NULL,
+    original_media_type TEXT,
+    chosen_format TEXT NOT NULL,
+    generated_content TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(candidate_id) REFERENCES content_candidates(id)
 );
 
 CREATE TABLE IF NOT EXISTS drafts (
@@ -152,6 +165,15 @@ async def get_db() -> AsyncIterator[aiosqlite.Connection]:
 async def init_db() -> None:
     async with get_db() as db:
         await db.executescript(SCHEMA_SQL)
+        try:
+            await db.execute("ALTER TABLE raw_messages ADD COLUMN media_type TEXT")
+        except aiosqlite.OperationalError:
+            pass
+        try:
+            await db.execute("ALTER TABLE raw_messages ADD COLUMN media_paths_json TEXT")
+        except aiosqlite.OperationalError:
+            pass
+            
         for key, value in DEFAULT_SETTINGS.items():
             await db.execute(
                 '''

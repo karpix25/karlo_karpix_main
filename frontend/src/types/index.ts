@@ -1,5 +1,5 @@
 export type CandidateStatus = 'accepted' | 'rejected';
-export type DraftPlatform = 'telegram' | 'threads';
+export type DraftPlatform = 'telegram' | 'threads' | '5s Reels' | 'Аватар' | 'Карусель';
 export type DraftStatus =
   | 'generated'
   | 'in_review'
@@ -14,6 +14,8 @@ export interface InboxItem {
   raw_message_id: number;
   channel_username: string;
   text: string;
+  media_type?: string | null;
+  media_paths?: string[];
   summary: string;
   relevance_score: number;
   status: CandidateStatus;

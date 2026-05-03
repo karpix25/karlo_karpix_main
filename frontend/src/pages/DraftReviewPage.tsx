@@ -3,6 +3,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import type { DraftItem, DraftPlatform } from '../types';
 
+const platforms: { id: DraftPlatform; label: string }[] = [
+  { id: 'telegram', label: '📱 Telegram' },
+  { id: 'threads', label: '🧵 Threads' },
+  { id: '5s Reels', label: '🎥 Reels' },
+  { id: 'Аватар', label: '👤 Аватар' },
+  { id: 'Карусель', label: '📸 Карусель' },
+];
+
 export function DraftReviewPage() {
   const [platform, setPlatform] = useState<DraftPlatform>('telegram');
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
@@ -14,19 +22,23 @@ export function DraftReviewPage() {
 
   const load = async () => {
     setError('');
-    const data = await api.getDrafts(platform, 'in_review');
-    setDrafts(data);
-    if (!selectedId && data.length) {
-      setSelected(data[0]);
-    }
-    if (selectedId) {
-      const refreshed = data.find((d) => d.id === selectedId);
-      setSelected(refreshed ?? null);
+    try {
+      const data = await api.getDrafts(platform, 'in_review');
+      setDrafts(data);
+      if (!selectedId && data.length) {
+        setSelected(data[0]);
+      }
+      if (selectedId) {
+        const refreshed = data.find((d) => d.id === selectedId);
+        setSelected(refreshed ?? null);
+      }
+    } catch (e) {
+      setError((e as Error).message);
     }
   };
 
   useEffect(() => {
-    void load().catch((e: Error) => setError(e.message));
+    void load();
   }, [platform]);
 
   const contentPreview = useMemo(() => {
@@ -99,66 +111,102 @@ export function DraftReviewPage() {
   };
 
   return (
-    <section>
-      <div className="toolbar">
-        <h2>Проверка черновиков</h2>
-        <div className="tabs small">
-          <button className={platform === 'telegram' ? 'tab active' : 'tab'} onClick={() => setPlatform('telegram')} type="button">
-            Telegram
-          </button>
-          <button className={platform === 'threads' ? 'tab active' : 'tab'} onClick={() => setPlatform('threads')} type="button">
-            Threads
-          </button>
+    <section className="app-content">
+      <div className="toolbar" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
+        <h2>📝 Проверка черновиков</h2>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: '100%', paddingBottom: '4px' }}>
+          {platforms.map((p) => (
+            <button
+              key={p.id}
+              className={platform === p.id ? 'tab active' : 'tab'}
+              onClick={() => setPlatform(p.id)}
+              type="button"
+              style={{ fontSize: '12px', padding: '8px 12px' }}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {error ? <p className="error">{error}</p> : null}
+      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>⚠️ {error}</div> : null}
 
-      <div className="split">
-        <div className="list">
-          {drafts.map((draft) => (
-            <button
-              key={draft.id}
-              className={selected?.id === draft.id ? 'card active' : 'card'}
-              onClick={() => setSelected(draft)}
-              type="button"
-            >
-              <p className="meta">Черновик #{draft.id}</p>
-              <p>{draft.content.slice(0, 120)}...</p>
-            </button>
-          ))}
-          {!drafts.length ? <p>Нет черновиков на проверке.</p> : null}
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: drafts.length ? '250px 1fr' : '1fr', gap: '20px' }}>
+        {drafts.length > 0 && (
+          <div className="list">
+            {drafts.map((draft) => (
+              <button
+                key={draft.id}
+                className={selected?.id === draft.id ? 'card active' : 'card'}
+                onClick={() => setSelected(draft)}
+                type="button"
+                style={{ padding: '12px', width: '100%', textAlign: 'left', display: 'block' }}
+              >
+                <div className="meta">✨ Draft #{draft.id}</div>
+                <p style={{ fontSize: '13px', margin: '4px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {draft.content}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
 
-        <div className="editor">
-          {selected ? (
-            <>
-              <label>Текст</label>
+        {drafts.length === 0 && !busy && (
+          <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎐</div>
+            <p style={{ color: 'var(--tg-hint)' }}>Нет черновиков для платформы {platform}.</p>
+          </div>
+        )}
+
+        {selected && (
+          <div className="editor card">
+            <div style={{ marginBottom: '16px' }}>
+              <label>Текст поста</label>
               <textarea
                 value={selected.content}
                 onChange={(e) => setSelected({ ...selected, content: e.target.value })}
-                rows={10}
+                rows={8}
+                style={{ fontSize: '14px', lineHeight: '1.6' }}
               />
-              <label>Призыв к действию (CTA)</label>
-              <input value={selected.cta || ''} onChange={(e) => setSelected({ ...selected, cta: e.target.value })} />
-              <label>Хэштеги</label>
-              <input
-                value={selected.hashtags || ''}
-                onChange={(e) => setSelected({ ...selected, hashtags: e.target.value })}
-              />
-              <div className="actions">
-                <button onClick={save} disabled={busy} type="button">Сохранить</button>
-                <button onClick={regenerate} disabled={busy} type="button">Перегенерировать</button>
-                <button onClick={approve} disabled={busy} type="button">Одобрить</button>
-                <button onClick={reject} disabled={busy} type="button">Отклонить</button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label>Призыв (CTA)</label>
+                <input value={selected.cta || ''} onChange={(e) => setSelected({ ...selected, cta: e.target.value })} />
               </div>
-              <pre className="preview">{contentPreview}</pre>
-            </>
-          ) : (
-            <p>Выберите черновик.</p>
-          )}
-        </div>
+              <div>
+                <label>Хэштеги</label>
+                <input
+                  value={selected.hashtags || ''}
+                  onChange={(e) => setSelected({ ...selected, hashtags: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="actions" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+              <button onClick={save} disabled={busy} type="button" style={{ background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
+                💾 Сохранить
+              </button>
+              <button onClick={regenerate} disabled={busy} type="button" style={{ background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
+                🔄 Заново
+              </button>
+              <button onClick={approve} disabled={busy} type="button" style={{ background: 'var(--success)', color: 'white' }}>
+                ✅ Одобрить
+              </button>
+              <button onClick={reject} disabled={busy} type="button" style={{ background: 'var(--danger)', color: 'white' }}>
+                ❌ Отклонить
+              </button>
+            </div>
+            
+            <details style={{ marginTop: '20px' }}>
+              <summary>Предпросмотр финала</summary>
+              <pre style={{ marginTop: '8px' }}>{contentPreview}</pre>
+            </details>
+          </div>
+        )}
       </div>
     </section>
   );
 }
+

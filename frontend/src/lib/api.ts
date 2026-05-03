@@ -13,7 +13,7 @@ import type {
   UserbotStatus,
 } from '../types';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? 'http://localhost:8000';
+export const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? 'http://localhost:8000';
 
 function telegramInitData(): string {
   const webApp = (window as any)?.Telegram?.WebApp;
@@ -62,6 +62,11 @@ export const api = {
   }),
 
   getInbox: (status = 'accepted') => request<InboxItem[]>(`/api/inbox?status=${encodeURIComponent(status)}`),
+
+  postDecision: (candidateId: number, format: string) => request<{ status: string; generated_content: string }>(`/api/inbox/${candidateId}/decision`, {
+    method: 'POST',
+    body: JSON.stringify({ chosen_format: format }),
+  }),
 
   getDrafts: (platform?: string, status?: string) => {
     const query = new URLSearchParams();
