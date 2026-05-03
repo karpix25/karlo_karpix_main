@@ -465,3 +465,19 @@ async def list_channel_guard_events(limit: int = 100) -> list[dict[str, Any]]:
                 }
             )
         return out
+
+async def list_accepted_candidates(hours: int = 24) -> list[dict[str, Any]]:
+    async with get_db() as db:
+        cur = await db.execute(
+            '''
+            SELECT id, summary, relevance_score, created_at
+            FROM content_candidates
+            WHERE 
+                status = 'accepted'
+                AND julianday(created_at) > julianday('now', ?)
+            ORDER BY relevance_score DESC, created_at DESC
+            ''',
+            (f'-{hours} hours',),
+        )
+        rows = await cur.fetchall()
+        return [dict(row) for row in rows]

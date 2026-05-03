@@ -20,6 +20,7 @@ from schemas import (
     ChannelGuardEventItem,
     ChannelGuardStatusResponse,
     MemoryPreview,
+    PublishingSettings,
     ScheduleSettings,
     SkillsSettings,
     SourceSettings,
@@ -113,6 +114,21 @@ async def update_anti_abuse_settings(
     _user=Depends(require_user),
 ) -> AntiAbuseSettings:
     await set_setting('anti_abuse', payload.model_dump())
+    return payload
+
+
+@router.get('/publishing', response_model=PublishingSettings)
+async def get_publishing_settings(_user=Depends(require_user)) -> PublishingSettings:
+    payload = await get_setting('publishing')
+    return PublishingSettings(**payload)
+
+
+@router.put('/publishing', response_model=PublishingSettings)
+async def update_publishing_settings(
+    payload: PublishingSettings,
+    _user=Depends(require_user),
+) -> PublishingSettings:
+    await set_setting('publishing', payload.model_dump())
     return payload
 
 

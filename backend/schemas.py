@@ -81,6 +81,11 @@ class SkillsSettings(BaseModel):
     prefer_technical_content: bool = True
 
 
+class PublishingSettings(BaseModel):
+    telegram_target_channel: str = ""
+    telegraph_access_token: str | None = None
+
+
 class MemoryPreview(BaseModel):
     identity: str
     sorting_rules: str

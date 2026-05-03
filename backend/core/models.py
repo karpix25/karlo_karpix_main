@@ -14,6 +14,8 @@ class DraftPlatform(str, Enum):
     reels = '5s Reels'
     avatar = 'Аватар'
     carousel = 'Карусель'
+    digest = 'Дайджест'
+    telegraph = 'Telegra.ph'
 
 
 class DraftStatus(str, Enum):
