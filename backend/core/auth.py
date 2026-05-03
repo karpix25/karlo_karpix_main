@@ -91,6 +91,8 @@ async def get_current_user(
                 max_age_seconds=settings.telegram_initdata_max_age_seconds,
             )
         except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning('Auth failed: %s', exc)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
     if settings.admin_user_id > 0 and user.user_id != settings.admin_user_id:
