@@ -114,15 +114,18 @@ export function InboxPage() {
           style={{
             position: 'fixed',
             bottom: 0,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'min(800px, 100%)',
+            left: 0,
+            right: 0,
+            margin: '0 auto',
+            width: '100%',
+            maxWidth: '500px',
             background: 'var(--tg-secondary-bg)',
-            padding: '24px',
+            padding: '24px 16px',
             borderTopLeftRadius: '24px',
             borderTopRightRadius: '24px',
-            boxShadow: '0 -10px 25px rgba(0,0,0,0.1)',
-            zIndex: 100,
+            boxShadow: '0 -10px 40px rgba(0,0,0,0.3)',
+            zIndex: 1000,
+            boxSizing: 'border-box',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -169,8 +172,9 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
         position: 'absolute',
         width: 'calc(100% - 32px)',
         maxWidth: '400px',
-        left: '50%',
-        translateX: '-50%',
+        left: 0,
+        right: 0,
+        margin: '0 auto',
         cursor: 'grab',
         zIndex: 5,
       }}
@@ -178,7 +182,7 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
       whileTap={{ cursor: 'grabbing' }}
-      exit={{ x: x.get() < 0 ? -500 : 500, opacity: 0 }}
+      exit={{ x: x.get() < 0 ? '-150%' : '150%', opacity: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
     >
       <div className="card" style={{ height: '60vh', maxHeight: '600px', minHeight: '450px', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0, boxShadow: '0 15px 35px rgba(0,0,0,0.2)' }}>
