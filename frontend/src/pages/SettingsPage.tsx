@@ -77,7 +77,12 @@ export function SettingsPage() {
   const addSourceChannel = (channelRaw: string) => {
     const channel = channelRaw.trim();
     if (!channel) return;
-    const normalized = channel.startsWith('@') ? channel : `@${channel}`;
+    
+    let normalized = channel;
+    if (!normalized.startsWith('@') && !normalized.includes('/') && !normalized.startsWith('+')) {
+      normalized = `@${normalized}`;
+    }
+    
     const exists = sources.channels.some((item) => item.toLowerCase() === normalized.toLowerCase());
     if (!exists) {
       setSources({ channels: [...sources.channels, normalized] });
@@ -536,7 +541,7 @@ export function SettingsPage() {
       <div className="card">
         <h3>Каналы-источники</h3>
         <div className="inline">
-          <input value={newChannel} onChange={(e) => setNewChannel(e.target.value)} placeholder="@channel" />
+          <input value={newChannel} onChange={(e) => setNewChannel(e.target.value)} placeholder="@username или ссылка-приглашение" />
           <button onClick={addChannel} type="button">Добавить</button>
         </div>
         <ul className="channel-list">
