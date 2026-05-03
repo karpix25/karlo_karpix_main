@@ -21,7 +21,13 @@ class ContentOrchestratorAgent:
         if not self.llm.enabled:
             return text[:180].strip()
 
-        prompt = f'Сделай сжатое резюме поста для контент-менеджера личного бренда: {text}'
+        prompt = (
+            "Проанализируй пост и подготовь резюме для контент-менеджера. "
+            "Нужно выделить:\n"
+            "1. ЦЕПЛЯЮЩИЙ ЗАГОЛОВОК (Hook), который привлечет внимание.\n"
+            "2. КРАТКАЯ СУТЬ: основные тезисы и ценность информации (2-3 предложения).\n\n"
+            f"Текст для анализа: {text}"
+        )
         return await self.llm.complete(prompt)
 
     async def generate_draft(self, platform: str, summary: str, source_text: str) -> GeneratedDraft:
