@@ -27,6 +27,7 @@ class DraftStatus(str, Enum):
 
 
 class RunStatus(str, Enum):
+    pending = 'pending'
     running = 'running'
     completed = 'completed'
     failed = 'failed'
