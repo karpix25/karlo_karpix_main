@@ -45,6 +45,23 @@ async def get_sources(_user=Depends(require_user)) -> SourceSettings:
 
 @router.put('/sources', response_model=SourceSettings)
 async def update_sources(payload: SourceSettings, _user=Depends(require_user)) -> SourceSettings:
+    # Auto-join channels if they look like invite links
+    from services.telethon_service import TelethonUserbotService
+    userbot = TelethonUserbotService()
+    
+    normalized_channels = []
+    for channel in payload.channels:
+        if 't.me/' in channel or channel.startswith('+'):
+            try:
+                # Try to join and get a cleaner username/id
+                clean_name = await userbot.join_channel_by_link(channel)
+                normalized_channels.append(clean_name)
+            except Exception:
+                normalized_channels.append(channel)
+        else:
+            normalized_channels.append(channel)
+            
+    payload.channels = normalized_channels
     await set_setting('sources', payload.model_dump())
     await upsert_sources(payload.channels)
     return payload

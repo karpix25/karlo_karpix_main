@@ -276,26 +276,35 @@ class TelethonUserbotService:
                     while attempts <= max_retries:
                         try:
                             async for message in client.iter_messages(channel, limit=limit_per_channel):
-                                if not message or not getattr(message, 'message', None):
+                                if not message:
                                     continue
+                                
+                                text = str(getattr(message, 'message', '') or '').strip()
+                                media = getattr(message, 'media', None)
+                                
+                                # Skip only if both text and media are missing
+                                if not text and not media:
+                                    continue
+
                                 media_type = None
                                 media_paths = []
-                                if getattr(message, 'media', None):
+                                if media:
                                     try:
-                                        media_type = type(message.media).__name__
-                                        filename = f"{channel}_{message.id}"
-                                        path = await client.download_media(message, file=str(media_dir / filename))
+                                        media_type = type(media).__name__
+                                        # Use Telethon's auto-extension logic by not providing one
+                                        filename_base = f"{channel}_{message.id}"
+                                        path = await client.download_media(message, file=str(media_dir / filename_base))
                                         if path:
                                             rel_path = f"/media/{Path(path).name}"
                                             media_paths.append(rel_path)
                                     except Exception as e:
-                                        logger.error(f"Failed to download media: {e}")
+                                        logger.error(f"Failed to download media for {channel}:{message.id}: {e}")
 
                                 channel_messages.append(
                                     IngestedMessage(
                                         channel_username=channel,
                                         message_id=int(message.id),
-                                        text=str(message.message),
+                                        text=text or "[Медиа-сообщение]",
                                         posted_at=(message.date or datetime.now(tz=timezone.utc)).isoformat(),
                                         media_type=media_type,
                                         media_paths_json=json.dumps(media_paths) if media_paths else None,
@@ -363,6 +372,54 @@ class TelethonUserbotService:
         result.metrics.retried_channels = len(retried_channels)
         result.metrics.floodwait_channels = len(floodwait_channels)
         return result
+
+    async def join_channel_by_link(self, link: str) -> str:
+        """Joins a channel by username or invite link. Returns normalized username/ID."""
+        runtime = await self._runtime_config()
+        if not runtime['configured']:
+            return link
+
+        from telethon import TelegramClient
+        from telethon.tl.functions.channels import JoinChannelRequest
+        from telethon.tl.functions.messages import ImportChatInviteRequest
+        import re
+
+        client = TelegramClient(
+            session_storage_path(runtime['session_name']),
+            runtime['api_id'],
+            runtime['api_hash'],
+        )
+
+        target = link.strip().replace('@', '')
+        
+        # Invite links formats: 
+        # https://t.me/joinchat/XXXXX
+        # https://t.me/+XXXXX
+        # t.me/+XXXXX
+        invite_hash_match = re.search(r'(?:t\.me\/joinchat\/|t\.me\/\+)([a-zA-Z0-9_-]+)', link)
+        
+        async with telethon_operation_lock(runtime['session_name']):
+            async with client:
+                try:
+                    if invite_hash_match:
+                        invite_hash = invite_hash_match.group(1)
+                        updates = await client(ImportChatInviteRequest(invite_hash))
+                        # Try to get username from updates
+                        for chat in getattr(updates, 'chats', []):
+                            if getattr(chat, 'username', None):
+                                return chat.username
+                        return link # fallback
+                    else:
+                        # Public username or already joined
+                        entity = await client.get_entity(target)
+                        if getattr(entity, 'username', None):
+                            return entity.username
+                        
+                        await client(JoinChannelRequest(entity))
+                        return getattr(entity, 'username', str(entity.id))
+                except Exception as e:
+                    logger.warning(f"Failed to join channel {link}: {e}")
+                    return target
 
     async def publish_to_telegram(self, target_channel: str, text: str) -> str:
         runtime = await self._runtime_config()
