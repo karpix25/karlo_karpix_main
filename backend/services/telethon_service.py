@@ -253,7 +253,8 @@ class TelethonUserbotService:
         import json
         from pathlib import Path
         
-        media_dir = Path('./backend/media')
+        # Use absolute path for media_dir relative to this file
+        media_dir = Path(__file__).parent.parent / 'media'
         media_dir.mkdir(parents=True, exist_ok=True)
 
         retried_channels: set[str] = set()
@@ -275,7 +276,8 @@ class TelethonUserbotService:
 
                     while attempts <= max_retries:
                         try:
-                            async for message in client.iter_messages(channel, limit=limit_per_channel):
+                            # Use a larger limit to catch all parts of an album
+                            async for message in client.iter_messages(channel, limit=max(10, limit_per_channel)):
                                 if not message:
                                     continue
                                 
@@ -285,6 +287,10 @@ class TelethonUserbotService:
                                 # Skip only if both text and media are missing
                                 if not text and not media:
                                     continue
+                                
+                                # Debug media type
+                                if media:
+                                    logger.info(f"Detected media in {channel}:{message.id}: {type(media).__name__}")
 
                                 media_type = None
                                 media_paths = []
