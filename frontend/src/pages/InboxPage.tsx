@@ -35,6 +35,9 @@ export function InboxPage() {
       await api.triggerRun();
       setNotice('Парсинг запущен. Новые посты появятся через несколько секунд.');
       setTimeout(() => setNotice(''), 5000);
+      
+      // Give the background worker a head start
+      await new Promise(resolve => setTimeout(resolve, 1500));
       await load();
     } catch (e) {
       setError((e as Error).message);
@@ -209,35 +212,42 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
 
 
         {item.media_paths && item.media_paths.length > 0 ? (
-          <div style={{ height: '240px', background: '#000', overflow: 'hidden' }}>
-            {item.media_type === 'MessageMediaPhoto' ? (
-              <img src={`${API_BASE}${item.media_paths[0]}`} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ height: '260px', background: '#000', overflow: 'hidden' }}>
+            {item.media_type === 'MessageMediaDocument' || item.media_type === 'Document' ? (
+              <video src={`${API_BASE}${item.media_paths[0]}`} controls={false} autoPlay loop muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <video src={`${API_BASE}${item.media_paths[0]}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={`${API_BASE}${item.media_paths[0]}`} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             )}
           </div>
         ) : (
-          <div style={{ height: '140px', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: 'white' }}>
-            Нет медиа
+          <div style={{ height: '120px', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+            No visual attachment
           </div>
         )}
 
-        <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
-          <div className="meta">
-            <span>{item.channel_username}</span>
-            <span style={{ marginLeft: 'auto', background: 'rgba(0,122,255,0.1)', color: 'var(--accent)', padding: '2px 8px', borderRadius: '4px' }}>
-              Score: {item.relevance_score.toFixed(2)}
+        <div style={{ padding: '20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="meta" style={{ marginBottom: 0 }}>
+            <span style={{ fontWeight: 600, color: 'var(--accent)' }}>{item.channel_username.replace('@', '')}</span>
+            <span style={{ opacity: 0.6 }}>
+              Match: {Math.round(item.relevance_score * 100)}%
             </span>
           </div>
-          <h3 style={{ margin: '12px 0 8px' }}>Краткое содержание</h3>
-          <p style={{ fontSize: '14px', color: 'var(--tg-text)', lineHeight: '1.5' }}>{item.summary}</p>
           
-          <details style={{ marginTop: '16px' }}>
-            <summary>Полный текст</summary>
-            <p style={{ fontSize: '14px', lineHeight: '1.45', margin: 0, color: 'var(--tg-text)', whiteSpace: 'pre-wrap' }}>
-              {item.text}
-            </p>
-          </details>
+          <h3 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 700, lineHeight: '1.2' }}>
+            {item.summary.split('\n')[0]}
+          </h3>
+          <p style={{ fontSize: '15px', color: 'var(--tg-text)', lineHeight: '1.4', opacity: 0.9, margin: 0, whiteSpace: 'pre-wrap' }}>
+            {item.summary.split('\n').slice(1).join('\n').trim()}
+          </p>
+          
+          <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
+            <details style={{ border: 'none', padding: 0 }}>
+              <summary style={{ fontSize: '12px', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.5px' }}>View Original</summary>
+              <p style={{ fontSize: '14px', lineHeight: '1.45', marginTop: '12px', color: 'var(--tg-text)', whiteSpace: 'pre-wrap', opacity: 0.8 }}>
+                {item.text}
+              </p>
+            </details>
+          </div>
         </div>
         
         <div style={{ padding: '12px', textAlign: 'center', borderTop: '0.5px solid var(--separator)', color: 'var(--hint)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
