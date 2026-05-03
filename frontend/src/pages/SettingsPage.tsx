@@ -133,17 +133,57 @@ export function SettingsPage() {
     void load();
   }, []);
 
-  const addChannel = () => {
-    addSourceChannel(newChannel);
+  const addChannel = async () => {
+    const channel = newChannel.trim();
+    if (!channel) return;
+    
+    let normalized = channel;
+    if (!normalized.startsWith('@') && !normalized.includes('/') && !normalized.startsWith('+')) {
+      normalized = `@${normalized}`;
+    }
+    
     setNewChannel('');
-    setNotice('Канал добавлен. Не забудьте нажать "Сохранить всё".');
-    setTimeout(() => setNotice(''), 3000);
+    setBusy(true);
+    try {
+      let nextSources: { channels: string[] } | null = null;
+      setSources(prev => {
+        const exists = prev.channels.some((item) => item.toLowerCase() === normalized.toLowerCase());
+        if (!exists) {
+          nextSources = { channels: [...prev.channels, normalized] };
+          return nextSources;
+        }
+        return prev;
+      });
+
+      if (nextSources) {
+        await api.putSources(nextSources);
+        setNotice('Канал добавлен и сохранен.');
+      } else {
+        setNotice('Канал уже есть в списке.');
+      }
+      setTimeout(() => setNotice(''), 3000);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const removeChannel = (channelToRemove: string) => {
-    setSources({
-      channels: sources.channels.filter((item) => item.toLowerCase() !== channelToRemove.toLowerCase()),
-    });
+  const removeChannel = async (channelToRemove: string) => {
+    setBusy(true);
+    try {
+      const nextSources = {
+        channels: sources.channels.filter((item) => item.toLowerCase() !== channelToRemove.toLowerCase()),
+      };
+      setSources(nextSources);
+      await api.putSources(nextSources);
+      setNotice('Канал удален.');
+      setTimeout(() => setNotice(''), 3000);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const parseRetryBackoff = (): number[] => {

@@ -53,35 +53,52 @@ async def update_sources(
     await set_setting('sources', payload.model_dump())
     await upsert_sources(payload.channels)
     
-    # Launch auto-join in background
+    background_tasks.add_task(join_new_channels, payload.channels)
+    return payload
+
+async def join_new_channels(channels: list[str]):
     from services.telethon_service import TelethonUserbotService
-    userbot = TelethonUserbotService()
+    from services.userbot_auth_service import userbot_auth_service
+    import logging
+    logger = logging.getLogger(__name__)
     
-    async def join_new_channels(channels: list[str]):
-        normalized = []
-        changed = False
-        for channel in channels:
-            if 't.me/' in channel or channel.startswith('+'):
-                try:
-                    clean_name = await userbot.join_channel_by_link(channel)
-                    if not clean_name.startswith('@') and not clean_name.startswith('-'):
-                        clean_name = f"@{clean_name}"
+    userbot = TelethonUserbotService()
+    status = await userbot_auth_service.get_status()
+    
+    if not status.authorized:
+        logger.warning("Userbot not authorized, skipping auto-join background task")
+        return
+
+    normalized = []
+    changed = False
+    for channel in channels:
+        target = channel.strip()
+        if any(p in target for p in ['t.me/', 'telegram.me/', 'joinchat/']) or target.startswith('+'):
+            try:
+                logger.info(f"Attempting to normalize/join channel: {target}")
+                clean_name = await userbot.join_channel_by_link(target)
+                if clean_name and not clean_name.startswith('@') and not clean_name.startswith('-') and not clean_name.isdigit():
+                    clean_name = f"@{clean_name}"
+                
+                if clean_name and clean_name != target:
                     normalized.append(clean_name)
                     changed = True
-                except Exception:
-                    normalized.append(channel)
-            else:
-                normalized.append(channel)
-        
-        if changed:
-            # Update settings with normalized names
-            new_payload = {'channels': normalized}
-            await set_setting('sources', new_payload)
-            await upsert_sources(normalized)
-
-    background_tasks.add_task(join_new_channels, payload.channels)
+                    logger.info(f"Normalized {target} -> {clean_name}")
+                else:
+                    normalized.append(target)
+            except Exception as e:
+                logger.error(f"Auto-join failed for {target}: {e}")
+                normalized.append(target)
+        else:
+            normalized.append(target)
     
-    return payload
+    if changed:
+        # Deduplicate and sort
+        final_list = sorted(list(set(normalized)))
+        new_payload = {'channels': final_list}
+        await set_setting('sources', new_payload)
+        await upsert_sources(final_list)
+        logger.info(f"Sources updated and persisted after background normalization: {final_list}")
 
 
 @router.get('/anti-abuse', response_model=AntiAbuseSettings)
