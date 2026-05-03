@@ -216,11 +216,13 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
             </span>
           </div>
           <h3 style={{ margin: '12px 0 8px' }}>Краткое содержание</h3>
-          <p style={{ fontSize: '15px', color: 'var(--tg-text)', lineHeight: '1.5' }}>{item.summary}</p>
+          <p style={{ fontSize: '14px', color: 'var(--tg-text)', lineHeight: '1.5' }}>{item.summary}</p>
           
           <details style={{ marginTop: '16px' }}>
             <summary>Полный текст</summary>
-            <pre style={{ fontSize: '12px', marginTop: '8px' }}>{item.text}</pre>
+            <p style={{ fontSize: '14px', lineHeight: '1.45', margin: 0, color: 'var(--tg-text)', whiteSpace: 'pre-wrap' }}>
+              {item.text}
+            </p>
           </details>
         </div>
         

@@ -63,7 +63,7 @@ body {
 
 .app-brand h1 {
   margin: 12px 0 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.5px;
 }
@@ -144,9 +144,9 @@ body {
 
 .toolbar h2 {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
 }
 
 /* Buttons - iOS Style */
@@ -155,8 +155,8 @@ button:not(.bottom-nav-tab):not(.card):not(.tab) {
   color: #ffffff;
   border: none;
   border-radius: var(--radius-button);
-  padding: 12px 20px;
-  font-size: 16px;
+  padding: 10px 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   width: 100%;
@@ -193,10 +193,10 @@ input, textarea {
   background-color: var(--bg);
   border: 0.5px solid var(--separator);
   border-radius: 10px;
-  padding: 12px;
-  font-size: 16px;
+  padding: 10px;
+  font-size: 15px;
   color: var(--text);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 input:focus, textarea:focus {
