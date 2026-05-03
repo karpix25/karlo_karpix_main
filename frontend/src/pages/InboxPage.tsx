@@ -157,9 +157,10 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
   const likeOpacity = useTransform(x, [50, 150], [0, 1]);
 
   const handleDragEnd = (_: any, info: any) => {
-    if (info.offset.x > 100) {
+    const threshold = 80;
+    if (info.offset.x > threshold) {
       onSwipeRight();
-    } else if (info.offset.x < -100) {
+    } else if (info.offset.x < -threshold) {
       onSwipeLeft();
     }
   };
@@ -170,20 +171,22 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
         x,
         rotate,
         position: 'absolute',
-        width: 'calc(100% - 32px)',
+        width: 'calc(100% - 24px)',
         maxWidth: '400px',
         left: 0,
         right: 0,
         margin: '0 auto',
         cursor: 'grab',
         zIndex: 5,
+        touchAction: 'none',
       }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={1}
       onDragEnd={handleDragEnd}
       whileTap={{ cursor: 'grabbing' }}
-      exit={{ x: x.get() < 0 ? '-150%' : '150%', opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      exit={{ x: x.get() < 0 ? '-200%' : '200%', opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       <div className="card" style={{ height: '60vh', maxHeight: '600px', minHeight: '450px', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0, boxShadow: '0 15px 35px rgba(0,0,0,0.2)' }}>
         <motion.div style={{ opacity: nopeOpacity, position: 'absolute', top: 40, right: 20, border: '4px solid var(--danger)', color: 'var(--danger)', padding: '8px 16px', borderRadius: '12px', fontWeight: 'bold', fontSize: '32px', zIndex: 10, transform: 'rotate(15deg)', pointerEvents: 'none' }}>
