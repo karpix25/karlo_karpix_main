@@ -171,7 +171,6 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
         width: 'calc(100% - 32px)',
         maxWidth: '400px',
         left: '50%',
-        x: x, // Use the motion value
         translateX: '-50%',
         cursor: 'grab',
         zIndex: 5,

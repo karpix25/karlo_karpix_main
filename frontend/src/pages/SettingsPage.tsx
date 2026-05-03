@@ -296,7 +296,6 @@ export function SettingsPage() {
   };
 
   return (
-  return (
     <section className="app-content">
       <div className="toolbar">
         <h2>⚙️ Настройки системы</h2>
