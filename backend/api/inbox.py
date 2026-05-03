@@ -61,3 +61,12 @@ async def post_decision(
     )
     
     return {"status": "ok", "generated_content": generated.content}
+
+@router.post('/{candidate_id}/reject')
+async def reject_candidate(
+    candidate_id: int,
+    _user=Depends(require_user),
+):
+    from core.repository import update_candidate_status
+    await update_candidate_status(candidate_id, 'rejected')
+    return {"status": "ok"}

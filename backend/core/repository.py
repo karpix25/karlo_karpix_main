@@ -167,6 +167,15 @@ async def create_candidate(
         return int(cur.lastrowid)
 
 
+async def update_candidate_status(candidate_id: int, status: str) -> None:
+    async with get_db() as db:
+        await db.execute(
+            'UPDATE content_candidates SET status = ? WHERE id = ?',
+            (status, candidate_id),
+        )
+        await db.commit()
+
+
 async def create_draft(
     candidate_id: int,
     platform: DraftPlatform,

@@ -68,6 +68,10 @@ export const api = {
     body: JSON.stringify({ chosen_format: format }),
   }),
 
+  rejectInboxItem: (candidateId: number) => request(`/api/inbox/${candidateId}/reject`, {
+    method: 'POST',
+  }),
+
   getDrafts: (platform?: string, status?: string) => {
     const query = new URLSearchParams();
     if (platform) query.set('platform', platform);
