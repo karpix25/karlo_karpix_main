@@ -4,11 +4,11 @@ import { api } from '../lib/api';
 import type { DraftItem, DraftPlatform } from '../types';
 
 const platforms: { id: DraftPlatform; label: string }[] = [
-  { id: 'telegram', label: '📱 Telegram' },
-  { id: 'threads', label: '🧵 Threads' },
-  { id: '5s Reels', label: '🎥 Reels' },
-  { id: 'Аватар', label: '👤 Аватар' },
-  { id: 'Карусель', label: '📸 Карусель' },
+  { id: 'telegram', label: 'Telegram' },
+  { id: 'threads', label: 'Threads' },
+  { id: '5s Reels', label: 'Reels' },
+  { id: 'Аватар', label: 'Аватар' },
+  { id: 'Карусель', label: 'Карусель' },
 ];
 
 export function DraftReviewPage() {
@@ -113,7 +113,7 @@ export function DraftReviewPage() {
   return (
     <section className="app-content">
       <div className="toolbar" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
-        <h2>📝 Проверка черновиков</h2>
+        <h2>Проверка черновиков</h2>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: '100%', paddingBottom: '4px' }}>
           {platforms.map((p) => (
             <button
@@ -129,7 +129,7 @@ export function DraftReviewPage() {
         </div>
       </div>
 
-      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>⚠️ {error}</div> : null}
+      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>{error}</div> : null}
 
       <div style={{ display: 'grid', gridTemplateColumns: drafts.length ? '250px 1fr' : '1fr', gap: '20px' }}>
         {drafts.length > 0 && (
@@ -142,7 +142,7 @@ export function DraftReviewPage() {
                 type="button"
                 style={{ padding: '12px', width: '100%', textAlign: 'left', display: 'block' }}
               >
-                <div className="meta">✨ Draft #{draft.id}</div>
+                <div className="meta">Draft #{draft.id}</div>
                 <p style={{ fontSize: '13px', margin: '4px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                   {draft.content}
                 </p>
@@ -153,7 +153,6 @@ export function DraftReviewPage() {
 
         {drafts.length === 0 && !busy && (
           <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎐</div>
             <p style={{ color: 'var(--tg-hint)' }}>Нет черновиков для платформы {platform}.</p>
           </div>
         )}
@@ -184,18 +183,18 @@ export function DraftReviewPage() {
               </div>
             </div>
 
-            <div className="actions" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-              <button onClick={save} disabled={busy} type="button" style={{ background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
-                💾 Сохранить
+            <div className="actions" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+              <button onClick={save} disabled={busy} type="button" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
+                Сохранить
               </button>
-              <button onClick={regenerate} disabled={busy} type="button" style={{ background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
-                🔄 Заново
+              <button onClick={regenerate} disabled={busy} type="button" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
+                Заново
               </button>
               <button onClick={approve} disabled={busy} type="button" style={{ background: 'var(--success)', color: 'white' }}>
-                ✅ Одобрить
+                Одобрить
               </button>
               <button onClick={reject} disabled={busy} type="button" style={{ background: 'var(--danger)', color: 'white' }}>
-                ❌ Отклонить
+                Отклонить
               </button>
             </div>
             

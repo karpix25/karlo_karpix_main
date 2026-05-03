@@ -82,16 +82,15 @@ export default function App() {
 
   const statusBadge = (() => {
     if (!userbotStatus.configured) {
-      return { text: 'Userbot не настроен', cls: 'warn' as const };
+      return { text: 'Не настроен', cls: 'warn' as const };
     }
     if (userbotStatus.authorized) {
-      const account = userbotStatus.me_username ? ` · @${userbotStatus.me_username}` : '';
-      return { text: `Userbot авторизован${account}`, cls: 'ok' as const };
+      return { text: 'Активен', cls: 'ok' as const };
     }
     if (userbotStatus.pending_phone) {
-      return { text: 'Userbot ожидает код подтверждения', cls: 'warn' as const };
+      return { text: 'Ожидает код', cls: 'warn' as const };
     }
-    return { text: 'Userbot не авторизован', cls: 'bad' as const };
+    return { text: 'Нужен вход', cls: 'bad' as const };
   })();
 
   if (checkingAccess) {
@@ -120,7 +119,7 @@ export default function App() {
         <div className="app-header-row">
           <div className="app-brand">
             <h1>VACA</h1>
-            <p>Автономный контент-процесс для Carlo</p>
+            <p>Автономный контент-процесс</p>
           </div>
           <span className={`status-pill ${statusBadge.cls}`}>{statusBadge.text}</span>
         </div>

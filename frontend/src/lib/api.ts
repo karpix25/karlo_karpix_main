@@ -44,8 +44,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const text = await response.text();
     try {
       const payload = JSON.parse(text) as { detail?: string };
-      throw new Error(payload.detail || text || `HTTP ${response.status}`);
-    } catch {
+      const detail = payload.detail || '';
+      if (detail.includes('Expired initData')) {
+        // Auto reload to refresh Telegram initData
+        window.location.reload();
+      }
+      throw new Error(detail || text || `HTTP ${response.status}`);
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('HTTP')) throw e;
       throw new Error(text || `HTTP ${response.status}`);
     }
   }

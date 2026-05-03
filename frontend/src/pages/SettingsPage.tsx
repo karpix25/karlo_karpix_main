@@ -298,17 +298,17 @@ export function SettingsPage() {
   return (
     <section className="app-content">
       <div className="toolbar">
-        <h2>⚙️ Настройки системы</h2>
-        <button onClick={saveAll} disabled={busy} type="button">
-          {busy ? '⏳ Сохранение...' : '💾 Сохранить всё'}
+        <h2>Настройки системы</h2>
+        <button onClick={saveAll} disabled={busy} type="button" style={{ width: 'auto' }}>
+          {busy ? 'Сохранение...' : 'Сохранить всё'}
         </button>
       </div>
 
-      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>⚠️ {error}</div> : null}
-      {notice ? <div className="card" style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>✅ {notice}</div> : null}
+      {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>{error}</div> : null}
+      {notice ? <div className="card" style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>{notice}</div> : null}
 
       <div className="card">
-        <h3>🤖 Конфигурация Userbot</h3>
+        <h3>Конфигурация Userbot</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div>
             <label>API ID</label>
@@ -332,17 +332,17 @@ export function SettingsPage() {
         <input
           value={apiHashInput}
           onChange={(e) => setApiHashInput(e.target.value)}
-          placeholder={userbotConfig.has_api_hash ? '🔒 Сохранён. Введите только для замены.' : 'Введите API hash'}
+          placeholder={userbotConfig.has_api_hash ? 'Сохранён. Введите только для замены.' : 'Введите API hash'}
           type="password"
         />
-        <button onClick={saveUserbotConfig} disabled={busy} type="button" style={{ background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
-          💾 Сохранить конфиг Userbot
+        <button onClick={saveUserbotConfig} disabled={busy} type="button" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
+          Сохранить конфиг Userbot
         </button>
       </div>
 
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3>🔑 Авторизация Userbot</h3>
+          <h3>Авторизация Userbot</h3>
           <span className={`status-pill ${userbot.authorized ? 'ok' : 'bad'}`}>
             {userbot.authorized ? 'АВТОРИЗОВАН' : 'НУЖЕН ВХОД'}
           </span>
@@ -350,24 +350,24 @@ export function SettingsPage() {
         
         <div style={{ background: 'var(--field-bg)', padding: '12px', borderRadius: '12px', marginBottom: '20px' }}>
           <p className="meta" style={{ margin: 0 }}>
-             {userbot.me_username ? `👤 @${userbot.me_username}` : '👤 Аккаунт не подключен'} 
-             {userbot.me_phone ? ` · 📞 ${userbot.me_phone}` : ''}
+             {userbot.me_username ? `@${userbot.me_username}` : 'Аккаунт не подключен'} 
+             {userbot.me_phone ? ` · ${userbot.me_phone}` : ''}
           </p>
-          <p className="meta" style={{ margin: '4px 0 0' }}>📂 Сессия: {userbot.session_name || '-'}</p>
+          <p className="meta" style={{ margin: '4px 0 0' }}>Сессия: {userbot.session_name || '-'}</p>
         </div>
 
         <label>Телефон (международный формат)</label>
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1234567890" />
 
-        <div className="actions" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '16px' }}>
+        <div className="actions" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
           <button onClick={sendCode} disabled={busy || !userbot.configured || !phone.trim()} type="button" style={{ fontSize: '12px' }}>
-            📲 Код
+            Код
           </button>
-          <button onClick={refreshUserbot} disabled={busy} type="button" style={{ fontSize: '12px', background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
-            🔄 Обновить
+          <button onClick={refreshUserbot} disabled={busy} type="button" style={{ fontSize: '12px', background: 'rgba(0,0,0,0.05)', color: 'var(--text)' }}>
+            Обновить
           </button>
           <button onClick={logoutUserbot} disabled={busy || !userbot.authorized} type="button" style={{ fontSize: '12px', background: 'var(--danger)', color: 'white' }}>
-            🚪 Выйти
+            Выйти
           </button>
         </div>
 
@@ -387,12 +387,12 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="actions" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <div className="actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <button onClick={signInByCode} disabled={busy || !phone.trim() || !code.trim()} type="button">
-            ✅ Войти по коду
+            Войти по коду
           </button>
           <button onClick={signInByPassword} disabled={busy || !password.trim()} type="button">
-            🔑 По паролю
+            По паролю
           </button>
         </div>
       </div>

@@ -71,9 +71,9 @@ export function InboxPage() {
   return (
     <section className="app-content" style={{ position: 'relative', height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column' }}>
       <div className="toolbar" style={{ zIndex: 10 }}>
-        <h2>🔥 Твое решение</h2>
-        <button onClick={triggerRun} disabled={loading} type="button">
-          {loading ? '⏳' : '🚀'}
+        <h2>Решение</h2>
+        <button onClick={triggerRun} disabled={loading} type="button" style={{ width: 'auto' }}>
+          {loading ? 'Загрузка...' : 'Запустить'}
         </button>
       </div>
 
@@ -98,8 +98,7 @@ export function InboxPage() {
             className="card"
             style={{ textAlign: 'center', padding: '40px', marginTop: '40px' }}
           >
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌈</div>
-            <p style={{ color: 'var(--tg-hint)' }}>Все посты разобраны!</p>
+            <p style={{ color: 'var(--tg-hint)', fontSize: '18px', fontWeight: '500' }}>Все посты разобраны</p>
             <button onClick={load} style={{ marginTop: '20px', background: 'var(--field-bg)', color: 'var(--tg-text)' }}>
               Обновить список
             </button>
@@ -127,18 +126,18 @@ export function InboxPage() {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0 }}>🎥 Выбери формат</h3>
-            <button onClick={() => setShowFormatSelector(null)} style={{ padding: '4px 8px', background: 'none', color: 'var(--tg-hint)', boxShadow: 'none' }}>Закрыть</button>
+            <h3 style={{ margin: 0 }}>Выбор формата</h3>
+            <button onClick={() => setShowFormatSelector(null)} style={{ padding: '4px 8px', background: 'none', color: 'var(--tg-hint)', boxShadow: 'none', width: 'auto' }}>Закрыть</button>
           </div>
           <div className="actions" style={{ gridTemplateColumns: '1fr' }}>
             <button onClick={() => handleDecision(showFormatSelector.candidate_id, '5s Reels')} disabled={decisionLoading[showFormatSelector.candidate_id]}>
-               🎥 5s Reels
+               5s Reels
             </button>
             <button onClick={() => handleDecision(showFormatSelector.candidate_id, 'Аватар')} disabled={decisionLoading[showFormatSelector.candidate_id]}>
-               👤 Аватар
+               Аватар
             </button>
             <button onClick={() => handleDecision(showFormatSelector.candidate_id, 'Карусель')} disabled={decisionLoading[showFormatSelector.candidate_id]}>
-               📸 Карусель
+               Карусель
             </button>
           </div>
         </motion.div>
@@ -207,9 +206,9 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
 
         <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
           <div className="meta">
-            <span>📡 {item.channel_username}</span>
-            <span style={{ marginLeft: 'auto', background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '2px 8px', borderRadius: '4px' }}>
-              ⭐️ {item.relevance_score.toFixed(2)}
+            <span>{item.channel_username}</span>
+            <span style={{ marginLeft: 'auto', background: 'rgba(0,122,255,0.1)', color: 'var(--accent)', padding: '2px 8px', borderRadius: '4px' }}>
+              Score: {item.relevance_score.toFixed(2)}
             </span>
           </div>
           <h3 style={{ margin: '12px 0 8px' }}>Краткое содержание</h3>
@@ -221,8 +220,8 @@ function SwipeCard({ item, onSwipeLeft, onSwipeRight }: { item: InboxItem, onSwi
           </details>
         </div>
         
-        <div style={{ padding: '12px', textAlign: 'center', borderTop: '1px solid var(--field-border)', color: 'var(--tg-hint)', fontSize: '12px' }}>
-          ⬅️ Свайп влево (Отклонить) | Свайп вправо (Создать) ➡️
+        <div style={{ padding: '12px', textAlign: 'center', borderTop: '0.5px solid var(--separator)', color: 'var(--hint)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Свайп влево — Отклонить | Свайп вправо — Создать
         </div>
       </div>
     </motion.div>
