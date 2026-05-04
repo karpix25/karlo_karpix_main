@@ -97,6 +97,16 @@ export const api = {
   rejectDraft: (id: number) => request(`/api/drafts/${id}/reject`, { method: 'POST' }),
   regenerateDraft: (id: number) => request<DraftItem>(`/api/drafts/${id}/regenerate`, { method: 'POST' }),
 
+  getPublishing: () => request<{ telegram_target_channel: string; telegraph_access_token: string | null }>('/api/settings/publishing'),
+  putPublishing: (payload: { telegram_target_channel: string; telegraph_access_token: string | null }) => request('/api/settings/publishing', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }),
+
+  postDigest: (hours = 24) => request(`/api/drafts/generate-digest?hours=${hours}`, {
+    method: 'POST'
+  }),
+
   getSources: () => request<SourcesSettings>('/api/settings/sources'),
   putSources: (payload: SourcesSettings) => request<SourcesSettings>('/api/settings/sources', {
     method: 'PUT',

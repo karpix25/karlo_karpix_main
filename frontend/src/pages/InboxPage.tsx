@@ -75,6 +75,20 @@ export function InboxPage() {
     }
   };
 
+  const generateDigest = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await api.postDigest(24); // Default 24 hours
+      setNotice('Дайджест успешно сформирован! Перейдите в раздел "Черновики".');
+      setTimeout(() => setNotice(''), 5000);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     void load();
   }, []);
@@ -85,9 +99,14 @@ export function InboxPage() {
     <section className="app-content" style={{ position: 'relative', height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column' }}>
       <div className="toolbar" style={{ zIndex: 10 }}>
         <h2>Решение</h2>
-        <button onClick={triggerRun} disabled={loading} type="button" style={{ width: 'auto' }}>
-          {loading ? 'Загрузка...' : 'Запустить'}
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={triggerRun} disabled={loading} type="button" style={{ width: 'auto' }}>
+            {loading ? '⌛' : '📥 Поиск'}
+          </button>
+          <button onClick={generateDigest} disabled={loading} type="button" style={{ width: 'auto', background: 'rgba(0, 122, 255, 0.1)', color: 'var(--accent)' }}>
+            ✨ Дайджест
+          </button>
+        </div>
       </div>
 
       {error ? <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', zIndex: 10 }}>{error}</div> : null}

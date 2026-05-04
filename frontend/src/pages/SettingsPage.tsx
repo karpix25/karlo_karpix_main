@@ -49,6 +49,7 @@ const defaultGuardStatus: ChannelGuardStatus = {
 };
 
 export function SettingsPage() {
+  const [publishing, setPublishing] = useState({ telegram_target_channel: '', telegraph_access_token: '' });
   const [sources, setSources] = useState<SourcesSettings>({ channels: [] });
   const [schedule, setSchedule] = useState<ScheduleSettings>({ interval_minutes: 30 });
   const [skills, setSkills] = useState<SkillsSettings>({
@@ -73,7 +74,7 @@ export function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [activeTab, setActiveTab] = useState<'userbot' | 'sources' | 'ai' | 'system'>('userbot');
+  const [activeTab, setActiveTab] = useState<'userbot' | 'sources' | 'ai' | 'publishing' | 'system'>('userbot');
 
   const addSourceChannel = (channelRaw: string) => {
     const channel = channelRaw.trim();
@@ -102,6 +103,7 @@ export function SettingsPage() {
         userbotConfigData,
         antiAbuseData,
         guardData,
+        pubData,
       ] = await Promise.all([
         api.getSources(),
         api.getSchedule(),
@@ -111,6 +113,7 @@ export function SettingsPage() {
         api.getUserbotConfig(),
         api.getAntiAbuse(),
         api.getGuardStatus(),
+        api.getPublishing(),
       ]);
       setSources(sourcesData);
       setSchedule(scheduleData);
@@ -120,6 +123,7 @@ export function SettingsPage() {
       setUserbotConfig(userbotConfigData);
       setAntiAbuse(antiAbuseData);
       setGuardStatus(guardData);
+      setPublishing(pubData);
       setRetryBackoffInput(antiAbuseData.retry_backoff_s.join(','));
       if (userbotStatus.pending_phone) {
         setPhone(userbotStatus.pending_phone);
@@ -192,6 +196,20 @@ export function SettingsPage() {
       .map((item) => Number(item.trim()))
       .filter((num) => Number.isFinite(num) && num >= 0);
     return parsed.length ? parsed : [2, 8, 20];
+  };
+
+  const savePublishing = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await api.putPublishing(publishing);
+      setNotice('Настройки публикации сохранены.');
+      setTimeout(() => setNotice(''), 3000);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const saveAll = async () => {
@@ -372,7 +390,8 @@ export function SettingsPage() {
       <div className="settings-tabs">
         <button className={`tab ${activeTab === 'userbot' ? 'active' : ''}`} onClick={() => setActiveTab('userbot')}>Аккаунт</button>
         <button className={`tab ${activeTab === 'sources' ? 'active' : ''}`} onClick={() => setActiveTab('sources')}>Источники</button>
-        <button className={`tab ${activeTab === 'ai' ? 'active' : ''}`} onClick={() => setActiveTab('ai')}>AI & Память</button>
+        <button className={`tab ${activeTab === 'ai' ? 'active' : ''}`} onClick={() => setActiveTab('ai')}>AI</button>
+        <button className={`tab ${activeTab === 'publishing' ? 'active' : ''}`} onClick={() => setActiveTab('publishing')}>Публикация</button>
         <button className={`tab ${activeTab === 'system' ? 'active' : ''}`} onClick={() => setActiveTab('system')}>Система</button>
       </div>
 
@@ -553,6 +572,39 @@ export function SettingsPage() {
               <summary>offers.md</summary>
               <pre>{memory.offers}</pre>
             </details>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'publishing' && (
+        <>
+          <div className="card">
+            <h3>Telegram Публикация</h3>
+            <label>Юзернейм канала или группы (цель)</label>
+            <input 
+              value={publishing.telegram_target_channel} 
+              onChange={(e) => setPublishing({...publishing, telegram_target_channel: e.target.value})}
+              placeholder="@my_target_channel"
+            />
+            <p className="meta">Убедитесь, что ваш юзербот является администратором в этом канале.</p>
+          </div>
+
+          <div className="card">
+            <h3>Telegra.ph</h3>
+            <label>Telegraph Access Token (опционально)</label>
+            <input 
+              type="password"
+              value={publishing.telegraph_access_token || ''} 
+              onChange={(e) => setPublishing({...publishing, telegraph_access_token: e.target.value})}
+              placeholder="Введите токен или оставьте пустым"
+            />
+            <p className="meta">Если пусто — система создаст временный аккаунт автоматически.</p>
+          </div>
+
+          <div className="sticky-footer">
+            <button onClick={savePublishing} disabled={busy} type="button">
+              {busy ? 'Сохранение...' : 'Сохранить настройки публикации'}
+            </button>
           </div>
         </>
       )}
