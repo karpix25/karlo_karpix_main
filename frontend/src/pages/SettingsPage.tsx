@@ -8,6 +8,7 @@ import type {
   ScheduleSettings,
   SkillsSettings,
   SourcesSettings,
+  PublishingSettings,
   UserbotChannelItem,
   UserbotConfig,
   UserbotStatus,
@@ -49,7 +50,7 @@ const defaultGuardStatus: ChannelGuardStatus = {
 };
 
 export function SettingsPage() {
-  const [publishing, setPublishing] = useState({ telegram_target_channel: '', telegraph_access_token: '' });
+  const [publishing, setPublishing] = useState<PublishingSettings>({ telegram_target_channel: '', telegraph_access_token: '' });
   const [sources, setSources] = useState<SourcesSettings>({ channels: [] });
   const [schedule, setSchedule] = useState<ScheduleSettings>({ interval_minutes: 30 });
   const [skills, setSkills] = useState<SkillsSettings>({

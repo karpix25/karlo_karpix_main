@@ -1,5 +1,5 @@
 export type CandidateStatus = 'accepted' | 'rejected';
-export type DraftPlatform = 'telegram' | 'threads' | '5s Reels' | 'Аватар' | 'Карусель';
+export type DraftPlatform = 'telegram' | 'threads' | '5s Reels' | 'Аватар' | 'Карусель' | 'telegraph' | 'digest';
 export type DraftStatus =
   | 'generated'
   | 'in_review'
@@ -8,6 +8,11 @@ export type DraftStatus =
   | 'rejected'
   | 'ready_for_manual_publish'
   | 'error';
+
+export interface PublishingSettings {
+  telegram_target_channel: string;
+  telegraph_access_token: string | null;
+}
 
 export interface InboxItem {
   candidate_id: number;
